@@ -13,20 +13,25 @@ function [tbl, corrupt_ids] ...
 % - SubjID and Hemisphere function as an unique index
 % the remaining columns are the extracted features:
 % - AvgCortThickness: average pial thickness as from ?h.thickness,
-%   corrected for areas towards the Corpus callosum (CC; where T ~ 0)
-% - PialArea: corrected for CC areas; as from ?h.pial
+%   corrected for areas towards the Corpus callosum (CC; vertices where T ~ 0) and
+%   based on a area-weighted estimate. See Wang 2016 PNAS for details. This
+%   measure is different from the FS estimated average thickness, and tends
+%   to be systematically higher. Does not impact the scaling behaviour
+%   though (as it is a systematic difference).
+% - PialArea: corrected for CC areas; from ?h.pial; note, again different
+%   from FS output, as FS includes CC area
 % - SmoothPialArea: corrected for CC areas; as from ?h.pial-outer-smoothed
 % - WhiteArea: corrected for CC areas; as from ?h.white
-% - ConvexHullArea: the convex hull of the pia is calculated in matlab
+% - ConvexHullArea: the convex hull of the pial is calculated in matlab
 %   by the convhull-function; corrected for CC areas
 % - PialFullArea: not corrected for CC areas
 % - WhiteFullArea: not corrected for CC areas
 % - SmoothPialFullArea: not corrected for CC areas
 % - ConvexHullFullArea: not corrected for CC areas
-% - PialFullVol: not corrected for CC areas
-% - WhiteFullVol: not corrected for CC areas
-% - GreymatterVol: not corrected for CC areas
-% - SmoothPialFullVol: not corrected for CC areas
+% - PialFullVol: Volume of the closed ?h.pial mesh
+% - WhiteFullVol: Volume of the closed ?h.white mesh
+% - GreymatterVol: The difference of the former two
+% - SmoothPialFullVol: Volume of the closed ?h.pial-outer-smoothed mesh
 %
 % Returns:
 % The table as described above and a list of IDs of corrupt subjects, i.e.
@@ -64,7 +69,7 @@ function [tbl, corrupt_ids] ...
 % Licence: CC-BY
 % 
 % Yujiang Wang, September 2016 (extractMaster_Hemisphere.m)
-% Tobias Ludwig, September 2019
+% Tobias Ludwig & Yujiang Wang, September 2019
 % Newcastle University, School of Computing, CNNP Lab (www.cnnp-lab.com)
 
 %% version
@@ -92,7 +97,7 @@ param.libdir = char(param.libdir);
 if ~isstring(ids(1))
     error(['The IDs have to be given as string array! Got ' ids(1)]);
 end
-if size(oldtbl, 2) ~= N_FEATURES + 2
+if size(oldtbl, 2)>0 && size(oldtbl, 2) ~= N_FEATURES + 2
     error(['Merging with old table impossible, number of columns mismatch.' ...
     ' Check with the documentation which features are currently supported.'])
 end
@@ -160,7 +165,7 @@ while iter <= length(ids) % weird matlab behaviour: cannot for-iterate over stri
         end
         
         % calculate full areas --------------------------------------------
-        
+        tic
         % pial
         pial_area=calcTriangleArea(pialf,pialv);
         pialFullArea(lr)=sum(pial_area);
@@ -221,6 +226,7 @@ while iter <= length(ids) % weird matlab behaviour: cannot for-iterate over stri
         whiteFullVol(lr)=calcMeshVol(whitef,whitev);
         GMVol(lr)=pialFullVol(lr)-whiteFullVol(lr); % TODO read from FS (?)
         opialFullVol(lr)=calcMeshVol(opialf,opialv);
+        toc
     end
     
     if corrupt
@@ -229,7 +235,7 @@ while iter <= length(ids) % weird matlab behaviour: cannot for-iterate over stri
     end
     
     %% add data to table
-    if param.hemi == "avg" | param.hemi == "sum"
+    if param.hemi == "avg" || param.hemi == "sum"
         if param.hemi == "avg"
             fun = mean;
         else
@@ -287,7 +293,7 @@ if param.verbose
     toc % print stopwatch
 end
 
-if length(corrupt) ~= 0
+if ~isempty(corrupt)
     disp("The following subjects were excluded from the table as corrupt:")
     disp(corrupt_ids)
 end

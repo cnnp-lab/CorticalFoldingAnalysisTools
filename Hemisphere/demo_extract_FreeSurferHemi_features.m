@@ -13,7 +13,7 @@ addpath(genpath('../lib'))
 
 %% load controls
 % subjdir contains the FreeSurfer files, one directory per subject
-subjdir='../';
+subjdir='/data/yujiang/data/NeuroImaging/TLEall/';
 
 % IDs are in the form 'C001', 'C002', ...
 % you have to select which subjects you want to calculate by string IDs!
@@ -21,17 +21,17 @@ ids = num2str([1:30]', '%03u'); % formating ID (leading zeros)
 ids = string([repmat('C', [length(ids),1]), ids]);
 
 % pattern for foldername of each subject
-format='*_T1.nii.gz'; % '*' will be replaced by the ID
+format='*_T1.nii.gz'; % '*' will be replaced by the ID - can leave empty if you directly provide the directory names
 
 % How to handle hemispheres? 'avg' for averaging, 'sum' for summing
 % (caution: might make sense for area/volume but not for e.g. thickness),
 % 'left' or 'right' for including only one of them respectively,
 % or 'both' for having separate rows for left and right hemispheres.
 % The column 'Hemisphere' indicates 'avg', 'sum' or 'left'/'right'.
-hemi = "both";
+hemi = "both"; %recommended
 
 % run extraction - this is the main function doing the data extraction!
-%controls = extract_FreeSurferHemi_features(subjdir, ids, format, 'hemi', hemi);
+controls = extract_FreeSurferHemi_features(subjdir, ids, [], 'format', format, 'hemi', hemi);
 
 %% load patients and merge with controls
 ids = ["930"];
