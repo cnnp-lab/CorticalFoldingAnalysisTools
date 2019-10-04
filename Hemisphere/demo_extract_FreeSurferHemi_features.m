@@ -9,6 +9,9 @@
 %completeness. Please refer to the freesurfer manual for further
 %information on this.
 
+%You can see some example outputs in the subfolder demo (as .mat files 
+%containing tables).
+
 addpath(genpath('../lib'))
 
 %% load controls
