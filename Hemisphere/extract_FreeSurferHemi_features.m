@@ -73,7 +73,7 @@ function [tbl, corrupt_ids] ...
 % Newcastle University, School of Computing, CNNP Lab (www.cnnp-lab.com)
 
 %% version
-VERSION_ID = .9; % for furture compatibility checks; not implemented yet
+VERSION_ID = 1; % for furture compatibility checks; not implemented yet
 N_FEATURES = 13; % number of features = number of table columns - 2
 
 %% parse options
