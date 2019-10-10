@@ -1,6 +1,3 @@
-%% TODO
-% - prevent merge conflicts by checking the table dimensions
-% - make format an option and oldtbl an argument (?)
 
 function [tbl, corrupt_ids] ...
 = extract_FreeSurferHemi_features(subjdir, ids, oldtbl, varargin)

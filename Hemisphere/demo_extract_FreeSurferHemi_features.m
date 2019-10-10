@@ -34,18 +34,22 @@ format='*_T1.nii.gz'; % '*' will be replaced by the ID - can leave empty if you 
 hemi = "both"; %recommended
 
 % run extraction - this is the main function doing the data extraction!
-controls = extract_FreeSurferHemi_features(subjdir, ids, [], 'format', format, 'hemi', hemi);
+% as we have no old table that should be used as a basis, we give an empty
+% table as a new argument
+tbl = extract_FreeSurferHemi_features(subjdir, ids, table(), 'format', format, 'hemi', hemi);
 
 %% load patients and merge with controls
 ids = ["930"];
 
-% merging is done by specifying the old table to add to/replacing old by new ids
+% merging is done by specifying the old table to add to/replacing old by new ids,
+% saving is not needed but prevents data loss in case of merge errors
+% since before the newly extracted data is backuped before merging
 [tbl, corrupt] = extract_FreeSurferHemi_features(subjdir, ids, tbl, ...
                                             'format', format, 'hemi', hemi, ...
-                                            'replace', true, ...
-                                            'verbose', true, ...
+                                            'replace', true, ... % default
+                                            'verbose', true, ... % default
                                             'libdir', '../lib' ...
-                                           ...'saveas', 'tle_controls'
+                                            ...'saveas', 'tbl'
                                             );
 %% join with metadata
 
@@ -53,4 +57,4 @@ ids = ["930"];
 load('./demo/metadata.mat'); % will load variable 'metadata'
 
 % join table with metadata table by SubjectID (common column in the tables)
-tle_controls = join(tle_controls, metadata, 'Keys', 'SubjectID');
+tbl_meta = join(tbl, metadata, 'Keys', 'SubjectID');
