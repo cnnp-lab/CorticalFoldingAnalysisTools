@@ -121,16 +121,14 @@ if ~isempty(oldtbl) && ~param.replace
     ids = setdiff(unique(ids), unique(oldtbl.SubjectID));
 end
 
-corrupt_ids = [];
+corrupt_ids = strings(); % empty string array = [""], first will be deleted
 corrupt = false;
 
 %% Load subject data
 tic % start timer
-iter = 1;
-while iter <= length(ids) % weird matlab behaviour: cannot for-iterate over string array, hence using while
+for iter = 1:length(ids)
     % make foldername
     id = ids(iter);
-    iter = iter + 1;
     if param.format == ""
         fn = char(id);
     else
@@ -290,9 +288,10 @@ if param.verbose
     toc % print stopwatch
 end
 
-if ~isempty(corrupt)
+corrupt_ids = corrupt_ids(2:end); % cut off the first ""
+if ~isempty(corrupt_ids)
     disp("The following subjects were excluded from the table as corrupt:")
-    disp(corrupt_ids)
+    disp(corrupt_ids(2:end))
 end
 
 %% merging old table and saving (if wished)
