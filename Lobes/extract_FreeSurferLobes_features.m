@@ -1,13 +1,13 @@
 
 function [tbl, corrupt_ids] ...
-= extract_FreeSurferHemi_features(subjdir, ids, oldtbl, varargin)
+= extract_FreeSurferLobes_features(subjdir, ids, oldtbl, varargin)
 % This function extracts the numeric data from FreeSurfer subjects into
-% one table on a hemisphere-basis, which is returned and can optionally be saved.
+% one table on a lobe-basis, which is returned and can optionally be saved.
 % The table format is chosen so that it can easily be ID-joined with a
 % metadata table and merged with further subjects later.
 %
 % The following columns are included:
-% - SubjID and Hemisphere function as an unique index
+% - SubjID, Lobe and Hemisphere function as an unique index TODO order?
 % the remaining columns are the extracted features:
 % - AvgCortThickness: average pial thickness as from ?h.thickness,
 %   corrected for areas towards the Corpus callosum (CC; vertices where T ~ 0) and
@@ -73,6 +73,7 @@ function [tbl, corrupt_ids] ...
 VERSION_ID = 1; % for furture compatibility checks; not implemented yet
 N_FEATURES = 13; % number of features = number of table columns - 2
 
+
 %% parse options
 p = inputParser;
 p.addParameter('format', '',      @(x) isstring(x) | ischar(x));
@@ -101,6 +102,11 @@ end
 
 addpath(param.libdir)
 addpath([param.libdir '/FSmatlab/'])
+
+% load look-up-table for FS lobe labels vs the labels we use here:
+% labels 0 1 2 3 4 5 are CC F P T O Insula
+% TODO include this in docstring!!!
+load(['LUT_lobes.mat'])
 
 %% make table
 tbl = table();
@@ -135,6 +141,13 @@ for iter = 1:length(ids)
         fn = char(strrep(param.format, '*', id));
     end
     
+    % init each feature for all 6 lobes and two hemispheres
+    z=zeros(6,2);
+    AvgThickness=z;
+    TotalArea=z;
+    SmoothArea=z;
+    
+    
     for lr = 1:length(lrstr)
         % load all relevant files
         pathpre = [subjdir, fn, '/surf/', lrstr(lr)];
@@ -144,11 +157,14 @@ for iter = 1:length(ids)
                 [pialv,pialf]   = freesurfer_read_surf([pathpre, 'h.pial']);
                 [whitev,whitef] = freesurfer_read_surf([pathpre, 'h.white']);
                 [opialv,opialf] = freesurfer_read_surf([pathpre, 'h.pial-outer-smoothed']);
+                % original version: [opialv,opialf]= freesurfer_read_surf([pathpre, POSname]); %% TODO what is POSname???
+                [~,label,~]     = read_annotation([pathpre, 'h.aparc.annot']);
             else % suppress all output from lib scripts (except errors/warnings)
                 evalc("[thickness, ~]  = read_curv([pathpre, 'h.thickness'])");
                 evalc("[pialv,pialf]   = freesurfer_read_surf([pathpre, 'h.pial'])");
                 evalc("[whitev,whitef] = freesurfer_read_surf([pathpre, 'h.white'])");
                 evalc("[opialv,opialf] = freesurfer_read_surf([pathpre, 'h.pial-outer-smoothed'])");
+                evalc("[~,label,~]     = read_annotation([pathpre, 'h.aparc.annot'])");
             end
         catch me
             % if one subject is corrupt, we don't want to fail and stop,
@@ -160,75 +176,39 @@ for iter = 1:length(ids)
             continue
         end
         
-        % calculate full areas --------------------------------------------
-        tic
-        % pial
-        pial_area=calcTriangleArea(pialf,pialv);
-        pialFullArea(lr)=sum(pial_area);
+        %% match labels to smooth surface
+        label_smooth = matchSurfLabel(label,pialv,opialv);
+        
+        %% relabel for lobes
+        nlabel_total_lobe  = label;
+        nlabel_smooth_lobe = label_smooth;
+        for k=0:5
+            idtoget = LUT_lobes(LUT_lobes(:,2)==k,1);
 
-        % opial (outer pial)
-        opial_area=calcTriangleArea(opialf,opialv);
-        opialFullArea(lr)=sum(opial_area);
-
-        % convex hull
-        convHull = convhull(pialv(:,1),pialv(:,2),pialv(:,3));
-        CH_area=calcTriangleArea(convHull,pialv);
-        CHFullArea(lr)=sum(CH_area);
+            for l=1:length(idtoget)
+                nlabel_total_lobe(nlabel_total_lobe==idtoget(l))=k;
+                nlabel_smooth_lobe(nlabel_smooth_lobe==idtoget(l))=k;
+            end
+        end
         
-        % white
-        white_area=calcTriangleArea(whitef,whitev);
-        whiteFullArea(lr)=sum(white_area);
-
-        % calculate CC areas-----------------------------------------------
-        cc=find(thickness==0); % corpus callosum + brain stem + ...
+        %% extract measures for lobes
+        [AvgThicknessLR,TotalAreaLR,SmoothAreaLR,~]= ...
+            getBasicMeasuresForParts(nlabel_total_lobe, ...
+                                     nlabel_smooth_lobe, ...
+                                     pialf,pialv,opialf,opialv, ...
+                                     thickness,whitef,whitev);
         
-        % for pial
-        pialCCArea(lr)=calcPartArea(pialf,pialv,cc);
-
-        % for white
-        whiteCCArea(lr)=calcPartArea(whitef,whitev,cc);
+        if corrupt
+            corrupt = false; % toggle flag
+            continue; % skip this subject
+        end
         
-        % for opial
-        lblcc=zeros(length(pialv),1);
-        lblcc(cc)=1;
-
-        bb = get_bounding_box([pialv;opialv]);
-        ratio = 32;
-        [parts, partsCount] = give_parts_to_vertices(pialv, bb, ratio);
-
-        labels_adjParts = find_smooth_labels_adjp(opialv, pialv, lblcc, parts, partsCount, bb, ratio);
-        opialCCArea(lr) = calcPartArea(opialf,opialv,find(labels_adjParts==1));
-
+        AvgThickness(:,lr)= AvgThicknessLR;
+        TotalArea(:,lr)   = TotalAreaLR;
+        SmoothArea(:,lr)  = SmoothAreaLR;
         
-        % calculate thickness----------------------------------------------
-        
-        %find out which faces are relevant
-        [liaa]=ismember(pialf,cc);
-        fid=sum(liaa,2);
-        fid_notCC=fid==0;
-        
-        % make thickness facebased
-        thicknessf=makeFacebased(thickness,pialf);
-        
-        % get weight
-        w=pial_area(fid_notCC)./sum(pial_area(fid_notCC)) + white_area(fid_notCC)./sum(white_area(fid_notCC));
-        w=w/2;
-        
-        % get thickness
-        thicknessPial(lr)=sum(w.*thicknessf(fid_notCC));
-        
-        % calculate Volumes------------------------------------------------
-        pialFullVol(lr)=calcMeshVol(pialf,pialv);
-        whiteFullVol(lr)=calcMeshVol(whitef,whitev);
-        GMVol(lr)=pialFullVol(lr)-whiteFullVol(lr); % TODO read from FS (?)
-        opialFullVol(lr)=calcMeshVol(opialf,opialv);
-        toc
     end
     
-    if corrupt
-        corrupt = false; % toggle flag
-        continue; % skip this subject
-    end
     
     %% add data to table
     if param.hemi == "avg" || param.hemi == "sum"
@@ -238,53 +218,37 @@ for iter = 1:length(ids)
             fun = sum;
         end
         
-        row = table();
-        row.SubjectID = id;
-        row.Hemisphere = param.hemi;
-            
-        row.AvgCortThickness   = fun(thicknessPial);
-        row.PialArea           = fun(pialFullArea-pialCCArea);
-        row.SmoothPialArea     = fun(opialFullArea-opialCCArea);
-        row.WhiteArea          = fun(whiteFullArea-whiteCCArea);
-        row.ConvexHullArea     = fun(CHFullArea-opialCCArea);
-        
-        row.PialFullArea       = fun(pialFullArea);
-        row.WhiteFullArea      = fun(whiteFullArea);
-        row.SmoothPialFullArea = fun(opialFullArea);
-        row.ConvexHullFullArea = fun(CHFullArea);
-            
-        row.PialFullVol        = fun(pialFullVol);
-        row.WhiteFullVol       = fun(whiteFullVol);
-        row.GreymatterVol      = fun(GMVol);
-        row.SmoothPialFullVol  = fun(opialFullVol);
-        
-        tbl = [tbl; row];
-    else % for "both", "right" and "left"
-        for lr = 1:length(lrstr)
+        for lobe = 0:5
             row = table();
             row.SubjectID = id;
-            row.Hemisphere = leftright(lr);
+            row.Lobe = lobe;
+            row.Hemisphere = param.hemi;
             
-            row.AvgCortThickness   = thicknessPial(lr);
-            row.PialArea           = pialFullArea(lr)-pialCCArea(lr);
-            row.SmoothPialArea     = opialFullArea(lr)-opialCCArea(lr);
-            row.WhiteArea          = whiteFullArea(lr)-whiteCCArea(lr);
-            row.ConvexHullArea     = CHFullArea(lr)-opialCCArea(lr);
-            
-            row.PialFullArea       = pialFullArea(lr);
-            row.WhiteFullArea      = whiteFullArea(lr);
-            row.SmoothPialFullArea = opialFullArea(lr);
-            row.ConvexHullFullArea = CHFullArea(lr);
-            
-            row.PialFullVol        = pialFullVol(lr);
-            row.WhiteFullVol       = whiteFullVol(lr);
-            row.GreymatterVol      = GMVol(lr);
-            row.SmoothPialFullVol  = opialFullVol(lr);
+            row.AvgThickness = fun(AvgThickness(lobe,:));
+            row.TotalArea    = fun(TotalArea(lobe,:));
+            row.SmoothArea   = fun(SmoothArea(lobe,:));
             
             tbl = [tbl; row];
         end
+    
+    else % for "both", "right" and "left"
+        for lobe = 0:5
+            for lr = 1:length(lrstr)
+                row = table();
+                row.SubjectID = id;
+                row.Lobe = lobe;
+                row.Hemisphere = leftright(lr);
+
+                row.AvgThickness = AvgThickness(lobe,lr);
+                row.TotalArea    = TotalArea(lobe,lr);
+                row.SmoothArea   = SmoothArea(lobe,lr);
+
+                tbl = [tbl; row];
+            end
+        end
     end
 end
+
 if param.verbose
     toc % print stopwatch
 end
