@@ -8,7 +8,8 @@ function [tbl, corrupt_ids] ...
 %
 % The following columns are included:
 % - SubjID, Hemisphere and Lobe function as an unique index
-% - Lobe is a numeric value: 0 1 2 3 4 5 are CC F P T O Insula respectively
+% - Lobe is a numeric value: 0 1 2 3 4 5 are for Corpus Callosum, Frontal lobe,
+%   Parietal lobe, Temporal lobe, Occipital lobe and Insula respectively
 % the remaining columns are the extracted features:
 % - AvgCortThickness: average pial thickness as from ?h.thickness,
 %   corrected for areas towards the Corpus callosum (CC; vertices where T ~ 0) and
@@ -16,20 +17,20 @@ function [tbl, corrupt_ids] ...
 %   measure is different from the FS estimated average thickness, and tends
 %   to be systematically higher. Does not impact the scaling behaviour
 %   though (as it is a systematic difference).
-% - PialArea: corrected for CC areas; from ?h.pial; note, again different
-%   from FS output, as FS includes CC area
-% - SmoothPialArea: corrected for CC areas; as from ?h.pial-outer-smoothed
-% - WhiteArea: corrected for CC areas; as from ?h.white
-% - ConvexHullArea: the convex hull of the pial is calculated in matlab
-%   by the convhull-function; corrected for CC areas
-% - PialFullArea: not corrected for CC areas
-% - WhiteFullArea: not corrected for CC areas
-% - SmoothPialFullArea: not corrected for CC areas
-% - ConvexHullFullArea: not corrected for CC areas
-% - PialFullVol: Volume of the closed ?h.pial mesh
-% - WhiteFullVol: Volume of the closed ?h.white mesh
+% - PialArea: from ?h.pial
+% - SmoothPialArea: from ?h.pial-outer-smoothed
+% - WhiteArea: from ?h.white
+% - GaussianCurvature: the Gaussian curvature of the smoothed (downsampled)
+%   convex hull (without boundaries), i.e. a cap around the lobe; it is
+%   crucial to correct the other measures for curvature when comparing relative lobe sizes
+%   since curvature captures the volume of the whole brain (K of a sphere is 1/r^2)
+% - PialVol: Volume between the ?h.pial mesh and the origin (like a cone)
+% - WhiteVol: Volume between the ?h.white mesh and the origin (like a cone)
 % - GreymatterVol: The difference of the former two
-% - SmoothPialFullVol: Volume of the closed ?h.pial-outer-smoothed mesh
+% TODO for consistency with hemisphere code, include:
+% - ConvexHullArea: the convex hull of the pial is calculated in matlab
+%   by the convhull-function TODO
+% - SmoothPialVol: Volume of the closed ?h.pial-outer-smoothed mesh TODO
 %
 % Returns:
 % The table as described above and a list of IDs of corrupt subjects, i.e.
@@ -68,7 +69,7 @@ function [tbl, corrupt_ids] ...
 % Licence: CC-BY
 % 
 % Yujiang Wang, September 2016 (extractMaster_Hemisphere.m)
-% Tobias Ludwig & Yujiang Wang, September 2019
+% Tobias Ludwig & Yujiang Wang, January 2020
 % Newcastle University, School of Computing, CNNP Lab (www.cnnp-lab.com)
 
 %% version
