@@ -7,7 +7,8 @@ function [tbl, corrupt_ids] ...
 % metadata table and merged with further subjects later.
 %
 % The following columns are included:
-% - SubjID, Lobe and Hemisphere function as an unique index TODO order?
+% - SubjID, Hemisphere and Lobe function as an unique index
+% - Lobe is a numeric value: 0 1 2 3 4 5 are CC F P T O Insula respectively
 % the remaining columns are the extracted features:
 % - AvgCortThickness: average pial thickness as from ?h.thickness,
 %   corrected for areas towards the Corpus callosum (CC; vertices where T ~ 0) and
@@ -37,6 +38,7 @@ function [tbl, corrupt_ids] ...
 % Arguments:
 % - SUBJDIR: char or string; path to the folder that contains the
 %   FreeSurfer subjects (one folder per subject)
+%   (the absolute path with a trailing slash has to be given!)
 % - IDS: string array; IDs of subjects to include in the table
 %   (or to update from oldtbl, see below)
 % - OLDTBL: table; the old table will be merged with the new table
@@ -102,10 +104,9 @@ end
 
 addpath(param.libdir)
 addpath([param.libdir '/FSmatlab/'])
+addpath([param.libdir '/iso2mesh/'])
 
-% load look-up-table for FS lobe labels vs the labels we use here:
-% labels 0 1 2 3 4 5 are CC F P T O Insula
-% TODO include this in docstring!!!
+% load look-up-table for FS lobe labels vs the labels we use here (0-5):
 load(['LUT_lobes.mat'])
 
 %% make table
@@ -142,11 +143,14 @@ for iter = 1:length(ids)
     end
     
     % init each feature for all 6 lobes and two hemispheres
-    z=zeros(6,2);
-    AvgThickness=z;
-    TotalArea=z;
-    SmoothArea=z;
-    
+    z = zeros(6,2);
+    AvgThickness = z;
+    TotalArea = z;
+    SmoothArea = z;
+    WhiteArea = z;
+    PialVol = z;
+    WhiteVol = z;
+    K_CHwoB = z; % gaussian curvature
     
     for lr = 1:length(lrstr)
         % load all relevant files
@@ -158,13 +162,13 @@ for iter = 1:length(ids)
                 [whitev,whitef] = freesurfer_read_surf([pathpre, 'h.white']);
                 [opialv,opialf] = freesurfer_read_surf([pathpre, 'h.pial-outer-smoothed']);
                 % original version: [opialv,opialf]= freesurfer_read_surf([pathpre, POSname]); %% TODO what is POSname???
-                [~,label,~]     = read_annotation([pathpre, 'h.aparc.annot']);
+                [~,label,~]     = read_annotation([subjdir, fn, '/label/', lrstr(lr), 'h.aparc.annot']);
             else % suppress all output from lib scripts (except errors/warnings)
                 evalc("[thickness, ~]  = read_curv([pathpre, 'h.thickness'])");
                 evalc("[pialv,pialf]   = freesurfer_read_surf([pathpre, 'h.pial'])");
                 evalc("[whitev,whitef] = freesurfer_read_surf([pathpre, 'h.white'])");
                 evalc("[opialv,opialf] = freesurfer_read_surf([pathpre, 'h.pial-outer-smoothed'])");
-                evalc("[~,label,~]     = read_annotation([pathpre, 'h.aparc.annot'])");
+                evalc("[~,label,~]     = read_annotation([subjdir, fn, '/label/', lrstr(lr), 'h.aparc.annot'])");
             end
         catch me
             % if one subject is corrupt, we don't want to fail and stop,
@@ -182,17 +186,17 @@ for iter = 1:length(ids)
         %% relabel for lobes
         nlabel_total_lobe  = label;
         nlabel_smooth_lobe = label_smooth;
-        for k=0:5
-            idtoget = LUT_lobes(LUT_lobes(:,2)==k,1);
+        for k = 0:5
+            idtoget = LUT_lobes(LUT_lobes(:,2)==k, 1);
 
-            for l=1:length(idtoget)
-                nlabel_total_lobe(nlabel_total_lobe==idtoget(l))=k;
-                nlabel_smooth_lobe(nlabel_smooth_lobe==idtoget(l))=k;
+            for l = 1:length(idtoget)
+                nlabel_total_lobe(nlabel_total_lobe==idtoget(l))   = k;
+                nlabel_smooth_lobe(nlabel_smooth_lobe==idtoget(l)) = k;
             end
         end
         
         %% extract measures for lobes
-        [AvgThicknessLR,TotalAreaLR,SmoothAreaLR,~]= ...
+        [AvgThicknessLR, TotalAreaLR, SmoothAreaLR, WhiteAreaLR, PialVolLR, WhiteVolLR, ~]= ...
             getBasicMeasuresForParts(nlabel_total_lobe, ...
                                      nlabel_smooth_lobe, ...
                                      pialf,pialv,opialf,opialv, ...
@@ -206,7 +210,54 @@ for iter = 1:length(ids)
         AvgThickness(:,lr)= AvgThicknessLR;
         TotalArea(:,lr)   = TotalAreaLR;
         SmoothArea(:,lr)  = SmoothAreaLR;
+        WhiteArea(:,lr)   = WhiteAreaLR;
+        PialVol(:,lr)     = PialVolLR;
+        WhiteVol(:,lr)    = WhiteVolLR;
         
+        %% calculate gaussian curvature (K) from convex hull (CV) of downsampled opial
+        % downsample Ae
+        chr = 0.2; % keepratio TODO rename? why so low?
+        [opialv_ds,opialf_ds] = meshresample(opialv,opialf,chr);
+        
+        % reassign labels
+        nlabel_smooth_lobe_ds = matchSurfLabel(nlabel_smooth_lobe,opialv,opialv_ds);
+        
+        KLR_from_CH_of_ds_opial=zeros(6,1);
+        Area_from_CH_of_ds_opial=zeros(6,1);
+        
+        for l = 0:5
+            ov_ids = find(nlabel_smooth_lobe_ds==l);
+            Lobepoints = opialv_ds(ov_ids,:);
+            if length(Lobepoints) > 4
+                CHSf_ds = convhull(Lobepoints);
+                Gru = getGaussianCurvPart(CHSf_ds,Lobepoints,1:length(ov_ids));
+
+                isBoundary = zeros(length(ov_ids),1);
+                for kl = 1:length(ov_ids)
+                    %where does idFL pop up in opialf?
+                    fid = opialf_ds(:,1)==ov_ids(kl) | ...
+                          opialf_ds(:,2)==ov_ids(kl) | ...
+                          opialf_ds(:,3)==ov_ids(kl);
+
+                    neighbourIDs = unique(opialf_ds(fid,:));
+                    ncolors = numel(unique(nlabel_smooth_lobe_ds(neighbourIDs)));
+                    if ncolors > 1
+                        isBoundary(kl) = 1;
+                    end
+                end
+
+                B_ids = find(isBoundary==1);
+                [TotalAreaCapi,~] = calcPartAreai(CHSf_ds,Lobepoints,1:size(Lobepoints,1));
+                Btri = ismember(CHSf_ds(:,1),B_ids) & ...
+                       ismember(CHSf_ds(:,2),B_ids) & ...
+                       ismember(CHSf_ds(:,3),B_ids);
+                
+                KLR_from_CH_of_ds_opial(l+1)  = sum(Gru(isBoundary==0));
+                Area_from_CH_of_ds_opial(l+1) = sum(TotalAreaCapi(~Btri));
+            end
+        end
+        
+        K_CHwoB(:,lr) = KLR_from_CH_of_ds_opial;
     end
     
     
@@ -218,31 +269,42 @@ for iter = 1:length(ids)
             fun = sum;
         end
         
-        for lobe = 0:5
+        for lobe = 1:6
             row = table();
             row.SubjectID = id;
-            row.Lobe = lobe;
             row.Hemisphere = param.hemi;
+            row.Lobe = lobe - 1;
             
-            row.AvgThickness = fun(AvgThickness(lobe,:));
-            row.TotalArea    = fun(TotalArea(lobe,:));
-            row.SmoothArea   = fun(SmoothArea(lobe,:));
+            row.AvgCortThickness  = fun(AvgThickness(lobe,:));
+            row.PialArea          = fun(TotalArea(lobe,:));
+            row.SmoothPialArea    = fun(SmoothArea(lobe,:));
+            row.WhiteArea         = fun(WhiteArea(lobe,:));
+            row.GaussianCurvature = fun(K_CHwoB(lobe,:));
             
+            row.PialVol           = fun(PialVol(lobe,:));
+            row.WhiteVol          = fun(WhiteVol(lobe,:));
+            row.GreymatterVol     = fun(PialVol(lobe,:) - WhiteVol(lobe,:));
             tbl = [tbl; row];
         end
     
     else % for "both", "right" and "left"
-        for lobe = 0:5
+        for lobe = 1:6
             for lr = 1:length(lrstr)
                 row = table();
                 row.SubjectID = id;
-                row.Lobe = lobe;
                 row.Hemisphere = leftright(lr);
+                row.Lobe = lobe - 1;
 
-                row.AvgThickness = AvgThickness(lobe,lr);
-                row.TotalArea    = TotalArea(lobe,lr);
-                row.SmoothArea   = SmoothArea(lobe,lr);
+                row.AvgCortThickness  = AvgThickness(lobe,lr);
+                row.PialArea          = TotalArea(lobe,lr);
+                row.SmoothPialArea    = SmoothArea(lobe,lr);
+                row.WhiteArea         = WhiteArea(lobe,lr);
+                row.GaussianCurvature = K_CHwoB(lobe,lr);
 
+                row.PialVol           = PialVol(lobe,lr);
+                row.WhiteVol          = WhiteVol(lobe,lr);
+                row.GreymatterVol     = PialVol(lobe,lr) - WhiteVol(lobe,lr);
+                
                 tbl = [tbl; row];
             end
         end
@@ -271,7 +333,7 @@ end
     
 if ~isempty(oldtbl)
     tbl = [tbl; oldtbl]; % stack the new table on top of the old
-    [~,ia,~] = unique(tbl(:, 1:2), 'rows'); % find (SubjID,Hemisphere)-rows
+    [~,ia,~] = unique(tbl(:, 1:3), 'rows'); % find (SubjID,Hemisphere,Lobe)-rows
     tbl = tbl(ia, :);    % of these, take the first occurence (the new one)
 end
 if param.verbose

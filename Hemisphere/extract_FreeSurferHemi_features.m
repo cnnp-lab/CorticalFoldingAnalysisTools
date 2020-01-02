@@ -37,6 +37,7 @@ function [tbl, corrupt_ids] ...
 % Arguments:
 % - SUBJDIR: char or string; path to the folder that contains the
 %   FreeSurfer subjects (one folder per subject)
+%   (the absolute path with a trailing slash has to be given!)
 % - IDS: string array; IDs of subjects to include in the table
 %   (or to update from oldtbl, see below)
 % - OLDTBL: table; the old table will be merged with the new table

@@ -8,7 +8,7 @@ vol=0;
         v1=v(fk(1),:);
         v2=v(fk(2),:);
         v3=v(fk(3),:);
-        vk=1/6*dot(cross(v1,v2),v3);
+        vk=1/6*abs(dot(cross(v1,v2),v3));
         vol=vol+vk;
     end
 
