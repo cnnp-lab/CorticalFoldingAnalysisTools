@@ -23,7 +23,12 @@ function [tbl, corrupt_ids] ...
 % - GaussianCurvature: the Gaussian curvature of the smoothed (downsampled)
 %   convex hull (without boundaries), i.e. a cap around the lobe; it is
 %   crucial to correct the other measures for curvature when comparing relative lobe sizes
-%   since curvature captures the volume of the whole brain (K of a sphere is 1/r^2)
+%   since curvature captures "how much" of a sphere is captured in a lobe
+%   (Gauss-Bonnet). See Wang 2019 Comms Biol for details. Note also that
+%   the total curvature of all the lobes will sum up to more than 4*pi as
+%   we integrate every lobe's exposed surface separately without their boundaries.
+%   However the correction term is still 4*pi for everyone, as we correct
+%   every lobe back to a sphere. I.e the sphere is the reference point.
 % - PialVol: Volume between the ?h.pial mesh and the origin (like a cone)
 % - WhiteVol: Volume between the ?h.white mesh and the origin (like a cone)
 % - GreymatterVol: The difference of the former two
@@ -35,6 +40,10 @@ function [tbl, corrupt_ids] ...
 % Returns:
 % The table as described above and a list of IDs of corrupt subjects, i.e.
 % such that have a missing FreeSurfer file, see above.
+% Note that "lobe" 0 (corpus collosum) and 5 (insula) are generally not
+% used. You can choose to include the insula PialArea in the other lobes
+% (see Wang 2019 Comms Biol), but it doesn't really make a huge difference.
+% Ignore any thickness & curvature estimates for the corpus collosum.
 %
 % Arguments:
 % - SUBJDIR: char or string; path to the folder that contains the
@@ -162,7 +171,6 @@ for iter = 1:length(ids)
                 [pialv,pialf]   = freesurfer_read_surf([pathpre, 'h.pial']);
                 [whitev,whitef] = freesurfer_read_surf([pathpre, 'h.white']);
                 [opialv,opialf] = freesurfer_read_surf([pathpre, 'h.pial-outer-smoothed']);
-                % original version: [opialv,opialf]= freesurfer_read_surf([pathpre, POSname]); %% TODO what is POSname???
                 [~,label,~]     = read_annotation([subjdir, fn, '/label/', lrstr(lr), 'h.aparc.annot']);
             else % suppress all output from lib scripts (except errors/warnings)
                 evalc("[thickness, ~]  = read_curv([pathpre, 'h.thickness'])");
@@ -217,7 +225,7 @@ for iter = 1:length(ids)
         
         %% calculate gaussian curvature (K) from convex hull (CV) of downsampled opial
         % downsample Ae
-        chr = 0.2; % keepratio TODO rename? why so low?
+        chr = 0.2; % keepratio - downsample to 20% of original mesh to speed up computation later.
         [opialv_ds,opialf_ds] = meshresample(opialv,opialf,chr);
         
         % reassign labels
@@ -235,7 +243,6 @@ for iter = 1:length(ids)
 
                 isBoundary = zeros(length(ov_ids),1);
                 for kl = 1:length(ov_ids)
-                    %where does idFL pop up in opialf?
                     fid = opialf_ds(:,1)==ov_ids(kl) | ...
                           opialf_ds(:,2)==ov_ids(kl) | ...
                           opialf_ds(:,3)==ov_ids(kl);

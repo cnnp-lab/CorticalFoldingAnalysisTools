@@ -41,7 +41,7 @@ hemi = "both"; %recommended
 
 %% load patients and merge with controls
 ids = ["930"];
-
+ids = ["100307"];
 % merging is done by specifying the old table to add to/replacing old by new ids,
 % saving is not needed but prevents data loss in case of merge errors
 % since before the newly extracted data is backuped before merging
@@ -59,3 +59,5 @@ load('../demo/metadata.mat'); % will load variable 'metadata'
 
 % join table with metadata table by SubjectID (common column in the tables)
 tbl_meta = join(tbl, metadata, 'Keys', 'SubjectID');
+
+%% how to plot an example in 100307
