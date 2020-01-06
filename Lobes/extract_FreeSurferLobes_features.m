@@ -74,7 +74,7 @@ function [tbl, corrupt_ids] ...
 % Dependencies:
 % The lib-folder should be in the same directory as this file,
 % otherwise the option 'libdir' has to point to it.
-%
+% ISO2MESH libaray needs to be downloaded&added to lib!!!: http://iso2mesh.sourceforge.net/
 % Licence: CC-BY
 % 
 % Yujiang Wang, September 2016 (extractMaster_Hemisphere.m)
@@ -114,7 +114,7 @@ end
 
 addpath(param.libdir)
 addpath([param.libdir '/FSmatlab/'])
-addpath([param.libdir '/iso2mesh/'])
+addpath([param.libdir '/iso2mesh/'])%Download this from http://iso2mesh.sourceforge.net/
 
 % load look-up-table for FS lobe labels vs the labels we use here (0-5):
 load(['LUT_lobes.mat'])

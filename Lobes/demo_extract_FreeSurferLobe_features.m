@@ -60,4 +60,25 @@ load('../demo/metadata.mat'); % will load variable 'metadata'
 % join table with metadata table by SubjectID (common column in the tables)
 tbl_meta = join(tbl, metadata, 'Keys', 'SubjectID');
 
-%% how to plot an example in 100307
+%% how to plot an example in 100307 in the left hemisphere
+
+lH=tbl(tbl.Hemisphere=="left",:);
+
+Ae_uncorrected=lH.SmoothPialArea(2:5);%the order of the lobes is: Frontal lobe, Parietal lobe, Temporal lobe, Occipital lobe
+At_uncorrected=lH.PialArea(2:5);
+T=lH.AvgCortThickness(2:5);
+K=lH.GaussianCurvature(2:5);
+
+correction_term=4*pi./K;
+
+Ae_corrected=Ae_uncorrected.*correction_term;
+At_corrected=At_uncorrected.*correction_term;
+
+x=log10(Ae_corrected);
+y=log10(At_corrected.*sqrt(T));
+figure(1)
+scatter(x,y)
+lsline
+b=regress(y,[x ones(size(x))]);
+disp(['Slope is ' num2str(b(1))])
+
