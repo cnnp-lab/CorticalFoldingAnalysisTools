@@ -40,7 +40,7 @@ hemi = "both"; %recommended
 %tbl = extract_FreeSurferLobes_features(subjdir, ids, table(), 'format', format, 'hemi', hemi);
 
 %% load patients and merge with controls
-ids = ["930"];
+%ids = ["930"];
 ids = ["100307"];
 % merging is done by specifying the old table to add to/replacing old by new ids,
 % saving is not needed but prevents data loss in case of merge errors

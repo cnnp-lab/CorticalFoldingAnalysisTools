@@ -32,18 +32,14 @@ function [tbl, corrupt_ids] ...
 % - PialVol: Volume between the ?h.pial mesh and the origin (like a cone)
 % - WhiteVol: Volume between the ?h.white mesh and the origin (like a cone)
 % - GreymatterVol: The difference of the former two
-% TODO for consistency with hemisphere code, include:
-% - ConvexHullArea: the convex hull of the pial is calculated in matlab
-%   by the convhull-function TODO
-% - SmoothPialVol: Volume of the closed ?h.pial-outer-smoothed mesh TODO
 %
 % Returns:
 % The table as described above and a list of IDs of corrupt subjects, i.e.
 % such that have a missing FreeSurfer file, see above.
-% Note that "lobe" 0 (corpus collosum) and 5 (insula) are generally not
+% Note that "lobe" 0 (corpus callosum) and 5 (insula) are generally not
 % used. You can choose to include the insula PialArea in the other lobes
 % (see Wang 2019 Comms Biol), but it doesn't really make a huge difference.
-% Ignore any thickness & curvature estimates for the corpus collosum.
+% Ignore any thickness & curvature estimates for the corpus callosum.
 %
 % Arguments:
 % - SUBJDIR: char or string; path to the folder that contains the
@@ -114,7 +110,7 @@ end
 
 addpath(param.libdir)
 addpath([param.libdir '/FSmatlab/'])
-addpath([param.libdir '/iso2mesh/'])%Download this from http://iso2mesh.sourceforge.net/
+addpath([param.libdir '/iso2mesh/'])% download this from http://iso2mesh.sourceforge.net/
 
 % load look-up-table for FS lobe labels vs the labels we use here (0-5):
 load(['LUT_lobes.mat'])
