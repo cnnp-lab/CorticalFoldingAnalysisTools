@@ -9,15 +9,20 @@ Note that the files ?h.pial-outer-smoothed have to exist. See the [Freesurfer we
 
 
 
-Currently, only the extraction of whole-hemisphere features are included. 
-Future releases will add the [lobe-level features](https://www.nature.com/articles/s42003-019-0421-7).
-
-
 ## How to use?
 
-For extraction of the whole-hemisphere features, Hemisphere/extract_FreeSurferHemi_features.m is the main function. Demo code is provided in Hemisphere/demo_extract_FreeSurferHemi_features.m with more details on the usage & functionalities.
-
 The lib folder must be included on the path in all folders and subfolders.
+
+### Hemisphere-based analysis 
+For extraction of the whole-hemisphere features, Hemisphere/extract_FreeSurferHemi_features.m is the main function. Demo code is provided in Hemisphere/demo_extract_FreeSurferHemi_features.m with more details on the usage & functionalities.
+This is the code used for the [2016 PNAS publication](https://doi.org/10.1073/pnas.1610175113).
+
+### Lobe-based analysis
+For extraction of the lobe-based features, Lobes/extract_FreeSurferLobes_features.m is the main function. Demo code is provided in Lobes/demo_extract_FreeSurferLobe_features.m with more details on the usage & functionalities.
+This is the code used for the [2019 Commun Biol publication](https://www.nature.com/articles/s42003-019-0421-7)
+
+### Dependencies
+For the lobe-based analysis, you will need the [iso2mesh](http://iso2mesh.sourceforge.net) matlab library on your path.
 
 
 ## How to cite?
@@ -39,4 +44,4 @@ In chronological order:
 * Andre Muricy (2016): developing lib/find_smooth_labels_adjp.m and associated scripts
 * Joe Necus (2016-2019): code checking
 * Kathryn Garside (2017-2018): code checking
-* Tobias Ludwig (2019): code checking, adding table and merging functionality Hemisphere/extract_FreeSurferHemi_features.m
+* Tobias Ludwig (2019-2020): code checking, adding table and merging functionality Hemisphere/extract_FreeSurferHemi_features.m and Lobes/extract_FreeSurferLobes_features.m
