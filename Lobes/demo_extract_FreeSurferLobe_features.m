@@ -64,6 +64,11 @@ tbl_meta = join(tbl, metadata, 'Keys', 'SubjectID');
 
 lH=tbl(tbl.Hemisphere=="left",:);
 
+%you can choose to add the insula surface area to one of the other lobes,
+%or divide it up between the lobes (which is what we did in the Commun Biol
+%paper), but here for simplicity I just show a plot ignoring the insula
+%surface area.
+
 Ae_uncorrected=lH.SmoothPialArea(2:5);%the order of the lobes is: Frontal lobe, Parietal lobe, Temporal lobe, Occipital lobe
 At_uncorrected=lH.PialArea(2:5);
 T=lH.AvgCortThickness(2:5);
@@ -82,6 +87,6 @@ lsline
 [b,bint]=regress(y,[x ones(size(x))]);
 disp(['Slope is between ' num2str(bint(1,1)) ' and ' num2str(bint(1,2))])
 
-%for more examples of how the plots in the paper here 
-%https://www.nature.com/articles/s42003-019-0421-7 were produced, see:
+%for more examples of how the plots in the paper 
+%(https://www.nature.com/articles/s42003-019-0421-7) were produced, see:
 %https://doi.org/10.5281/zenodo.2595060
