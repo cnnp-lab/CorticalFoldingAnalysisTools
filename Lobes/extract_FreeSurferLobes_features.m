@@ -122,12 +122,15 @@ tbl = table();
 switch(param.hemi)
     case "left"
         lrstr = 'l';
+        leftright = ["left"];
     case "right"
         lrstr = 'r';
+        leftright = ["right"];
     otherwise % avg, sum, both
         lrstr = 'lr';
+        leftright = ["left" "right"];
 end
-leftright = ["left" "right"];
+
 
 % if oldtbl given and replace == false, only load the new ids
 if ~isempty(oldtbl) && ~param.replace
@@ -341,7 +344,7 @@ if ~isempty(oldtbl)
     tbl = tbl(ia, :);    % of these, take the first occurence (the new one)
 end
 if param.verbose
-    disp('Merge with old table successful.');
+    disp('Merge with input table successful.');
 end
     
 if ~isempty(param.saveas)

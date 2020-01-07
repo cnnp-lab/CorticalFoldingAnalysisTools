@@ -79,6 +79,9 @@ y=log10(At_corrected.*sqrt(T));
 figure(1)
 scatter(x,y)
 lsline
-b=regress(y,[x ones(size(x))]);
-disp(['Slope is ' num2str(b(1))])
+[b,bint]=regress(y,[x ones(size(x))]);
+disp(['Slope is between ' num2str(bint(1,1)) ' and ' num2str(bint(1,2))])
 
+%for more examples of how the plots in the paper here 
+%https://www.nature.com/articles/s42003-019-0421-7 were produced, see:
+%https://doi.org/10.5281/zenodo.2595060
