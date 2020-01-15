@@ -27,7 +27,7 @@ For the lobe-based analysis, you will need the [iso2mesh](http://iso2mesh.source
 
 ## How to cite?
 
-If you use this code for your publications, please cite the zenodo entry for this pipeline: [https://doi.org/10.5281/zenodo.3473294](https://doi.org/10.5281/zenodo.3473294)
+If you use this code for your publications, please cite the zenodo entry for this pipeline: [https://doi.org/10.5281/zenodo.3608675](https://doi.org/10.5281/zenodo.3608675)
 
 
 ## Related publications
