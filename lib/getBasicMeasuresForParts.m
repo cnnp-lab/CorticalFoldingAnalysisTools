@@ -27,8 +27,8 @@ function [AvgThickness,TotalArea,SmoothArea,WhiteArea,PialVol,WhiteVol,lblNames]
         TotalArea(k)=sum(TotalAreai);
         
         %find the smooth area
-        ids=find(labels_adjParts==lblNames(k));
-        SmoothArea(k)=calcPartArea(opialf,opialv,ids);
+        sids=find(labels_adjParts==lblNames(k));
+        SmoothArea(k)=calcPartArea(opialf,opialv,sids);
         
         %avg thickness weighted by areas:
         pw=TotalAreai(fid>0)/TotalArea(k);
