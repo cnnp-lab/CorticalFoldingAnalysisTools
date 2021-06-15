@@ -5,13 +5,18 @@ Matlab scripts to extract features of cortical folding from Freesurfer folders. 
 
 Given a list of Freesurfer subjects, the provided code will automatically extract among other measures: the average cortical thickness (slightly different to FS's own algorithm), the total pial surface area (different to FS's code), and the exposed surface area. With these three quantities, [an analysis to test for the universal scaling of cortical folding](https://doi.org/10.1073/pnas.1610175113) can be performed. The main difference to FS's own code is that this pipeline accounts for the parts on the surface mesh that are not cortex.
 
-Note that the files ?h.pial-outer-smoothed have to exist. See the [Freesurfer website](https://surfer.nmr.mgh.harvard.edu/fswiki/LGI) for more details.
 
 
 
 ## How to use?
 
+
+### Before you start
 The lib folder must be included on the path in all folders and subfolders.
+You also will need the following files in the surf folder of your Freesurfer subject:
+?h.pial, ?h.white, ?h.thickness, and ?h.pial-outer-smoothed
+If ?h.pial-outer-smoothed does not exist, follow the [Freesurfer LGI](https://surfer.nmr.mgh.harvard.edu/fswiki/LGI) pipeline. You can just run the first few commands until you get the ?h.pial-outer-smoothed file (just a few minutes), but you can also run the whole LGI pipeline if you want (more time consuming).
+
 
 ### Hemisphere-based analysis 
 For extraction of the whole-hemisphere features, Hemisphere/extract_FreeSurferHemi_features.m is the main function. Demo code is provided in Hemisphere/demo_extract_FreeSurferHemi_features.m with more details on the usage & functionalities.
