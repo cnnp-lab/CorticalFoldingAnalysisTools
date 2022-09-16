@@ -1,3 +1,4 @@
 930_T1.nii.gz/
 lib/iso2mesh/
 *.m~
+.DS_Store
