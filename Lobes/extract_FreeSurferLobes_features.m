@@ -138,7 +138,6 @@ if ~isempty(oldtbl) && ~param.replace
 end
 
 corrupt_ids = strings(); % empty string array = [""], first will be deleted
-corrupt = false;
 
 %% Load subject data
 tic % start timer
@@ -184,7 +183,6 @@ for iter = 1:length(ids)
             warning(['A file of subject ' char(id) ' was not found: ' me.message ...
                 '\nThe whole subject is skipped and excluded from the table.']);
             corrupt_ids(end+1) = id; % store the corrupt id
-            corrupt = true; % flag to advance outer subject for loop
             continue
         end
         
@@ -210,10 +208,6 @@ for iter = 1:length(ids)
                                      pialf,pialv,opialf,opialv, ...
                                      thickness,whitef,whitev);
         
-        if corrupt
-            corrupt = false; % toggle flag
-            continue; % skip this subject
-        end
         
         AvgThickness(:,lr)= AvgThicknessLR;
         TotalArea(:,lr)   = TotalAreaLR;
