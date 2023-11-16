@@ -109,8 +109,7 @@ H.Children.Title.Interpreter = 'none';
 % Go though all datasets included
 for i=find(I)
     % Naming the dataset
-    idx = find(Conf.Root{i}=='/');
-    DtSt_nm = Conf.Root{i}(idx(end)+1:end);
+    [~,DtSt_nm,~] = fileparts(Conf.Root{i});
 
     % Update waitbar
     H.Name = string([DtSt_nm,'(',num2str(i),'/',num2str(sum(I)),')']);
