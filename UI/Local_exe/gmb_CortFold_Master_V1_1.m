@@ -106,13 +106,21 @@ CFextr_tbl = [];
 H = waitbar(0,'','Name','PROGRESS');
 H.Children.Title.Interpreter = 'none';
 
+% Estimate the total amount of time required
+aux = Conf.Subj(I);% Subject Set
+a = cellfun(@split, aux, repmat({Conf_Sep},size(aux)), 'UniformOutput', false);
+% Number of subjects
+s = cellfun(@length,cellfun(@unique,a, 'UniformOutput', false));
+t = [];
+tot_T = sum(s*5);
+
 % Go though all datasets included
 for i=find(I)
     % Naming the dataset
     [~,DtSt_nm,~] = fileparts(Conf.Root{i});
 
     % Update waitbar
-    H.Name = string([DtSt_nm,'(',num2str(i),'/',num2str(sum(I)),')']);
+    H.Name = string([DtSt_nm,'(',num2str(i),'/',num2str(sum(I)),') ',num2str(round(tot_T/60)),' mins.']);
 
     %% Check points
 
@@ -141,7 +149,7 @@ for i=find(I)
     % All subjects available on the dataset
     IDs = unique(Subj);
     for j=1:length(IDs)
-
+        tic;
         % Update Waitbar
         waitbar(j/length(IDs),H,['Progress: ',num2str(j),'/',num2str(length(IDs))]);
 
@@ -235,7 +243,7 @@ for i=find(I)
                         flag = 0;
                     end
 
-
+                    
                     %% Data extraction
                     switch OW_md
                         case 0
@@ -348,6 +356,11 @@ for i=find(I)
 
         % Store the subject estimated data on the extraction table
         CFextr_tbl =[CFextr_tbl;SbSs_tbl];
+
+        % Estimate the time it took to run a single subject
+        t(end+1) = toc;
+        s(i) = s(i)-1;
+        tot_T = sum(s*mean(t)/60);
     end
 end
 

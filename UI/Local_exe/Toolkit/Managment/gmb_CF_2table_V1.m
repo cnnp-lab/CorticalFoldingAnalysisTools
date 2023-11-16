@@ -48,7 +48,7 @@ else
             if ~ses_cnt
                 aux = [aux,Ses,'/'];
             end
-            aux = [aux,Lobe_cod{l},' corrupted during ',CF,' estimation'];
+            aux = [aux,char(Lobe_cod{l}),' corrupted during ',CF,' estimation'];
             report = [report; string(aux)];
 
             switch Hemi_MD
