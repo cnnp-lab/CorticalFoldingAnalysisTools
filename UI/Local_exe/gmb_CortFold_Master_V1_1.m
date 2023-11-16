@@ -149,8 +149,11 @@ for i=find(I)
     % All subjects available on the dataset
     IDs = unique(Subj);
     for j=1:length(IDs)
+        % Meassure the time of a single itteration
         tic;
+
         % Update Waitbar
+        H.Name = string([DtSt_nm,'(',num2str(i),'/',num2str(sum(I)),') ',num2str(round(tot_T,2)),' mins.']);
         waitbar(j/length(IDs),H,['Progress: ',num2str(j),'/',num2str(length(IDs))]);
 
         % Repository for subject parameters to extract and estimate
