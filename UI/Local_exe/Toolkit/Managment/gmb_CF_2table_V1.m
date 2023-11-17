@@ -1,6 +1,6 @@
 function [tbl,report] = gmb_CF_2table_V1(DT_path,Ses,report,CF_MD,Hemi_MD,atlas)
 
-% Check if there is a sesion
+% Check if there is a Session
 ses_cnt = strcmp(Ses,'_*_');
 if ~ses_cnt
     DT_path = fullfile(DT_path,Ses);

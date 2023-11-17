@@ -26,7 +26,7 @@ end
 % Structure of the expected configuration files
 Conf_Vars = {'Root','FS','Subj','Ses','Mode'};
 
-% Delimiter of subject and sesion fields
+% Delimiter of subject and Session fields
 Conf_Sep = ' | ';
 
 % Available Hemisphere mode
@@ -35,7 +35,7 @@ Hemi_MD = ["left","right","both","avg","sum"];
 % Avaialable Atlas currently
 ATL_dx = "LUT";
 
-% Identifier to determine that there is no sesion subfolder on the subject
+% Identifier to determine that there is no Session subfolder on the subject
 nSes_id = '_*_';
 
 %% Load the ocnfiguration data
@@ -131,7 +131,7 @@ for i=find(I)
         continue;
     end
 
-    % Extract all subject & sesions pair
+    % Extract all subject & Sessions pair
     Subj= split(Conf.Subj{i}, Conf_Sep);
     Ses = split(Conf.Ses{i} , Conf_Sep);
 
@@ -183,7 +183,7 @@ for i=find(I)
         report = [report; string(['   Subject ',IDs{j},' initiated'])];
 
 
-        % Instances of this subect (Number of sesions)
+        % Instances of this subect (Number of Sessions)
         jdx = find(strcmp(Subj,IDs{j}));
         for k=1:length(jdx)
 
@@ -207,7 +207,7 @@ for i=find(I)
                         % Values to compare to
                         vals = ["",ATL_md(p)];
 
-                        % Add sesion
+                        % Add Session
                         if ~strcmp(Ses{jdx(k)},'_*_')
                             vals = [string(Ses{jdx(k)}),vals];
                         else
@@ -286,7 +286,7 @@ for i=find(I)
                             else
                                 % Estimate parameters
                                 [tbl,report] = gmb_CF_2table_V1(Sub_path,...% Path to subject data
-                                    Ses{jdx(k)},...% Name/Code of the sesion
+                                    Ses{jdx(k)},...% Name/Code of the Session
                                     report,...% Text for the final report
                                     p,...% Code indicating Lobe(1) Hemisphere(2)
                                     Hemi_MD(Conf.Mode(end)),...% Treatmetn of the hemisphere data
@@ -296,7 +296,7 @@ for i=find(I)
                         case 2
                             % Estimate parameters
                             [tbl,report] = gmb_CF_2table_V1(Sub_path,...% Path to subject data
-                                Ses{jdx(k)},...% Name/Code of the sesion
+                                Ses{jdx(k)},...% Name/Code of the Session
                                 report,...% Text for the final report
                                 p,...% Code indicating Lobe(1) Hemisphere(2)
                                 Hemi_MD(Conf.Mode(end)),...% Treatmetn of the hemisphere data
@@ -320,15 +320,15 @@ for i=find(I)
                         tbl.Atlas = repmat(ATL_md(p),n_row,1);
                         tbl = movevars(tbl,"Atlas",'After',1);
 
-                        % Add the Sesion [FOR NOW JUST EMPTY]
+                        % Add the Session [FOR NOW JUST EMPTY]
                         if ~strcmp(Ses{jdx(k)},'_*_')
                             aux = string(Ses{jdx(k)});
                         else
                             aux = "-";
                         end
 
-                        tbl.Sesion = repmat(aux,n_row,1);
-                        tbl = movevars(tbl,"Sesion",'Before',1);
+                        tbl.Session = repmat(aux,n_row,1);
+                        tbl = movevars(tbl,"Session",'Before',1);
 
                         % Add the Subject IDs
                         tbl.Subjects = repmat(string(IDs{j}),n_row,1);
