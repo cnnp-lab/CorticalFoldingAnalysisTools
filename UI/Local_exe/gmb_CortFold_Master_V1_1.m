@@ -1,4 +1,4 @@
-function gmb_CortFold_Master_V1_1(path_0,out_nm_str)
+function Scr_Rep = gmb_CortFold_Master_V1_1(path_0,out_nm_str)
 
 if nargin<1
     path_0 = cd;
@@ -77,10 +77,6 @@ OW_md = Conf.Mode(3);
 % Avaialble options: 0->Not Extract 1->FS format 2->CNNP format
 EX_md = Conf.Mode(4);
 
-% When both OW_md & EX_md are 0 => Sreening and report mode activated
-Scr_Md = ~OW_md & EX_md;
-Scr_Md_cnt = 0;
-
 % Request the name of the output to the user if not provided
 if nargin<2 && EX_md>0
     prompt = {'Enter output name'};
@@ -98,6 +94,12 @@ I = zeros(size(Conf(:,1)));
 for i=1:(length(Conf_Vars)-1)
     I = I | ~cellfun(@isempty,Conf.(Conf_Vars{i}));
 end
+
+% When both OW_md & EX_md are 0 => Sreening and report mode activated
+Scr_Md = ~OW_md & ~EX_md;
+Scr_Rep = table(repmat("",1,length(find(I))),zeros(1,length(find(I))),...
+    zeros(1,length(find(I))),'VariableNames',{'dSet','N','cnt'});
+cnt = 0;
 
 % Table storing all the cortical folding parameters desired
 CFextr_tbl = [];
@@ -148,6 +150,15 @@ for i=find(I)
 
     % All subjects available on the dataset
     IDs = unique(Subj);
+
+    % Initialize the Dataset field of the Screening Output
+    if Scr_Md
+        cnt = cnt+1;
+        Scr_Rep.dSet(cnt) = string(DtSt_nm);
+        Scr_Rep.cnt (cnt) = 0;
+        Scr_Rep.N (cnt)   = length(IDs);
+    end
+
     for j=1:length(IDs)
         % Meassure the time of a single itteration
         tic;
@@ -185,8 +196,10 @@ for i=find(I)
 
         % Instances of this subect (Number of Sessions)
         jdx = find(strcmp(Subj,IDs{j}));
+        
+        % Indicator if data extracted for he desired configuration
+        CnfMd_flg = 0;
         for k=1:length(jdx)
-
             % Paramtetres extraction mode: Lobe | Hemisphere
             for p=1:2 % Current 2 parameter modes, Scales not implemented yet
                 if Conf.Mode(p) ~= 0
@@ -246,7 +259,10 @@ for i=find(I)
                         flag = 0;
                     end
 
-                    
+                    %% Include data was not found for the configuration
+                    % Count the configurations that have not been estimated
+                    CnfMd_flg = CnfMd_flg+~flag;
+
                     %% Data extraction
                     switch OW_md
                         case 0
@@ -345,6 +361,12 @@ for i=find(I)
             end
         end
 
+        % Add results to the Sreeninng report table
+        % Increase by 1 the number of complete subjects
+        if Scr_Md && CnfMd_flg==0
+            Scr_Rep.cnt (cnt) = Scr_Rep.cnt (cnt)+1;
+        end
+
         % Store subject parameteres on its folder
         % NaN to blanck
         if OW_md>0
@@ -406,13 +428,18 @@ switch EX_md
         report = [report; " ";" ";"Parameters stored on file:";string(fullfile(cd,'OUTPUT',[out_nm_str,'.csv']))];
 end
 
+
+
 % Store the report
 if ~Scr_Md
     writematrix(report,rep_path)
+    msgbox("Analysis Done","Done!!","help");
 end
 
 close(H);
 
-msgbox("Analysis Done","Done!!","help");
+
+
+
 
 

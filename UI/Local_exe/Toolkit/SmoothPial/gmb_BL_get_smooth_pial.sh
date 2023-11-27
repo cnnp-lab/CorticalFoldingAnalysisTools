@@ -15,19 +15,19 @@ export matlab="$(cat mtl_path.txt)"
 subs="$(cat subjects.txt)"
 
 # for each subject...
-#for subj_id in $subs; do 
+for subj_id in $subs; do 
 
 # ...for each hemisphere...
 	for hemisphere in lh rh; do
 
 		#...run first four steps from lGI process to get pial-outer-smoothed surface.
-		mris_fill -c -r 1 ${subs}/surf/${hemisphere}.pial ${subs}/surf/${hemisphere}.pial.filled.mgz
+		mris_fill -c -r 1 ${subj_id}/surf/${hemisphere}.pial ${subj_id}/surf/${hemisphere}.pial.filled.mgz
 		
-		${matlab} -nodisplay -nosplash -nodesktop -r "make_outer_surface('${subs}/surf/${hemisphere}.pial.filled.mgz', 15, '${subs}/surf/${hemisphere}.pial-outer'); exit;"
+		${matlab} -nodisplay -nosplash -nodesktop -r "make_outer_surface('${subj_id}/surf/${hemisphere}.pial.filled.mgz', 15, '${subj_id}/surf/${hemisphere}.pial-outer'); exit;"
 		
-		mris_extract_main_component ${subs}/surf/${hemisphere}.pial-outer ${subs}/surf/${hemisphere}.pial-outer-main
+		mris_extract_main_component ${subj_id}/surf/${hemisphere}.pial-outer ${subj_id}/surf/${hemisphere}.pial-outer-main
 		
-		mris_smooth -nw -n 30 ${subs}/surf/${hemisphere}.pial-outer-main ${subs}/surf/${hemisphere}.pial-outer-smoothed
+		mris_smooth -nw -n 30 ${subj_id}/surf/${hemisphere}.pial-outer-main ${subj_id}/surf/${hemisphere}.pial-outer-smoothed
 
 	done
 done

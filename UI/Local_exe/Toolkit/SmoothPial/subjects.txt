@@ -1,1 +1,4 @@
 /Users/guillermo/Sync/Data/04_CorticalFolding_Interface/gmb_Trial/FreeSurfer/0010001
+/Users/guillermo/Sync/Data/04_CorticalFolding_Interface/gmb_Trial/FreeSurfer/0010001
+/Users/guillermo/Sync/Data/04_CorticalFolding_Interface/gmb_Trial/FreeSurfer/0010002
+/Users/guillermo/Sync/Data/04_CorticalFolding_Interface/gmb_Trial/FreeSurfer/0010004
