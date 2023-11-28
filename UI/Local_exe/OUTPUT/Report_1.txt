@@ -10,5 +10,5 @@ Dataset gmb_Trial initiated
       EXTRACTED => both data obtained
  
  
-Parameters stored on file:
-/Users/guillermo/Documents/GitHub/CorticalFoldingAnalysisTools/UI/OUTPUT/CFpar_CNNP.csv
+Parameters stored on folder:
+/Users/guillermo/Documents/GitHub/CorticalFoldingAnalysisTools/UI/OUTPUT/CFpar_FS

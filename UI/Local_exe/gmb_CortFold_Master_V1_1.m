@@ -5,7 +5,7 @@ if nargin<1
 end
 
 % Path with necessary Toolkits
-addpath(genpath(fullfile(path_0,'ToolKit')))
+addpath(genpath(fullfile(path_0,'Toolkit')))
 
 % Path to the report file for erros and other issues
 rep_nm = gmb_NM_Check_V0 ('Report','.txt',fullfile(path_0,'OUTPUT'));
@@ -208,7 +208,7 @@ for i=find(I)
                     if ~isempty(SbOr_tbl)
                         switch p
                             case 1 % For Lobes
-                                aux = load(fullfile(path_0,'ToolKit','CortFold','Atlas',[char(ATL_md(p)),'.mat']));
+                                aux = load(fullfile(path_0,'Toolkit','CortFold','Atlas',[char(ATL_md(p)),'.mat']));
                                 P_n = length(unique(aux.Map(:,2)));
                             case 2 % For Hemispheres
                                 P_n = 1;
