@@ -1,11 +1,11 @@
-function gmb_CortFold_Master_V1_1(path_0,out_nm_str)
+function Scr_Rep = gmb_CortFold_Master_V1_1(path_0,out_nm_str)
 
 if nargin<1
     path_0 = cd;
 end
 
 % Path with necessary Toolkits
-addpath(genpath(fullfile(path_0,'ToolKit')))
+addpath(genpath(fullfile(path_0,'Toolkit')))
 
 % Path to the report file for erros and other issues
 rep_nm = gmb_NM_Check_V0 ('Report','.txt',fullfile(path_0,'OUTPUT'));
@@ -26,7 +26,7 @@ end
 % Structure of the expected configuration files
 Conf_Vars = {'Root','FS','Subj','Ses','Mode'};
 
-% Delimiter of subject and sesion fields
+% Delimiter of subject and Session fields
 Conf_Sep = ' | ';
 
 % Available Hemisphere mode
@@ -35,7 +35,7 @@ Hemi_MD = ["left","right","both","avg","sum"];
 % Avaialable Atlas currently
 ATL_dx = "LUT";
 
-% Identifier to determine that there is no sesion subfolder on the subject
+% Identifier to determine that there is no Session subfolder on the subject
 nSes_id = '_*_';
 
 %% Load the ocnfiguration data
@@ -77,10 +77,6 @@ OW_md = Conf.Mode(3);
 % Avaialble options: 0->Not Extract 1->FS format 2->CNNP format
 EX_md = Conf.Mode(4);
 
-% When both OW_md & EX_md are 0 => Sreening and report mode activated
-Scr_Md = ~OW_md & EX_md;
-Scr_Md_cnt = 0;
-
 % Request the name of the output to the user if not provided
 if nargin<2 && EX_md>0
     prompt = {'Enter output name'};
@@ -99,6 +95,12 @@ for i=1:(length(Conf_Vars)-1)
     I = I | ~cellfun(@isempty,Conf.(Conf_Vars{i}));
 end
 
+% When both OW_md & EX_md are 0 => Sreening and report mode activated
+Scr_Md = ~OW_md & ~EX_md;
+Scr_Rep = table(repmat("",1,length(find(I))),zeros(1,length(find(I))),...
+    zeros(1,length(find(I))),'VariableNames',{'dSet','N','cnt'});
+cnt = 0;
+
 % Table storing all the cortical folding parameters desired
 CFextr_tbl = [];
 
@@ -106,14 +108,21 @@ CFextr_tbl = [];
 H = waitbar(0,'','Name','PROGRESS');
 H.Children.Title.Interpreter = 'none';
 
+% Estimate the total amount of time required
+aux = Conf.Subj(I);% Subject Set
+a = cellfun(@split, aux, repmat({Conf_Sep},size(aux)), 'UniformOutput', false);
+% Number of subjects
+s = cellfun(@length,cellfun(@unique,a, 'UniformOutput', false));
+t = [];
+tot_T = sum(s*5);
+
 % Go though all datasets included
 for i=find(I)
     % Naming the dataset
-    idx = find(Conf.Root{i}=='/');
-    DtSt_nm = Conf.Root{i}(idx(end)+1:end);
+    [~,DtSt_nm,~] = fileparts(Conf.Root{i});
 
     % Update waitbar
-    H.Name = string([DtSt_nm,'(',num2str(i),'/',num2str(sum(I)),')']);
+    H.Name = string([DtSt_nm,'(',num2str(i),'/',num2str(sum(I)),') ',num2str(round(tot_T/60)),' mins.']);
 
     %% Check points
 
@@ -124,7 +133,7 @@ for i=find(I)
         continue;
     end
 
-    % Extract all subject & sesions pair
+    % Extract all subject & Sessions pair
     Subj= split(Conf.Subj{i}, Conf_Sep);
     Ses = split(Conf.Ses{i} , Conf_Sep);
 
@@ -141,9 +150,21 @@ for i=find(I)
 
     % All subjects available on the dataset
     IDs = unique(Subj);
+
+    % Initialize the Dataset field of the Screening Output
+    if Scr_Md
+        cnt = cnt+1;
+        Scr_Rep.dSet(cnt) = string(DtSt_nm);
+        Scr_Rep.cnt (cnt) = 0;
+        Scr_Rep.N (cnt)   = length(IDs);
+    end
+
     for j=1:length(IDs)
+        % Meassure the time of a single itteration
+        tic;
 
         % Update Waitbar
+        H.Name = string([DtSt_nm,'(',num2str(i),'/',num2str(sum(I)),') ',num2str(round(tot_T,2)),' mins.']);
         waitbar(j/length(IDs),H,['Progress: ',num2str(j),'/',num2str(length(IDs))]);
 
         % Repository for subject parameters to extract and estimate
@@ -173,10 +194,12 @@ for i=find(I)
         report = [report; string(['   Subject ',IDs{j},' initiated'])];
 
 
-        % Instances of this subect (Number of sesions)
+        % Instances of this subect (Number of Sessions)
         jdx = find(strcmp(Subj,IDs{j}));
+        
+        % Indicator if data extracted for he desired configuration
+        CnfMd_flg = 0;
         for k=1:length(jdx)
-
             % Paramtetres extraction mode: Lobe | Hemisphere
             for p=1:2 % Current 2 parameter modes, Scales not implemented yet
                 if Conf.Mode(p) ~= 0
@@ -185,7 +208,7 @@ for i=find(I)
                     if ~isempty(SbOr_tbl)
                         switch p
                             case 1 % For Lobes
-                                aux = load(fullfile(path_0,'ToolKit','CortFold','Atlas',[char(ATL_md(p)),'.mat']));
+                                aux = load(fullfile(path_0,'Toolkit','CortFold','Atlas',[char(ATL_md(p)),'.mat']));
                                 P_n = length(unique(aux.Map(:,2)));
                             case 2 % For Hemispheres
                                 P_n = 1;
@@ -197,7 +220,7 @@ for i=find(I)
                         % Values to compare to
                         vals = ["",ATL_md(p)];
 
-                        % Add sesion
+                        % Add Session
                         if ~strcmp(Ses{jdx(k)},'_*_')
                             vals = [string(Ses{jdx(k)}),vals];
                         else
@@ -236,6 +259,9 @@ for i=find(I)
                         flag = 0;
                     end
 
+                    %% Include data was not found for the configuration
+                    % Count the configurations that have not been estimated
+                    CnfMd_flg = CnfMd_flg+~flag;
 
                     %% Data extraction
                     switch OW_md
@@ -276,7 +302,7 @@ for i=find(I)
                             else
                                 % Estimate parameters
                                 [tbl,report] = gmb_CF_2table_V1(Sub_path,...% Path to subject data
-                                    Ses{jdx(k)},...% Name/Code of the sesion
+                                    Ses{jdx(k)},...% Name/Code of the Session
                                     report,...% Text for the final report
                                     p,...% Code indicating Lobe(1) Hemisphere(2)
                                     Hemi_MD(Conf.Mode(end)),...% Treatmetn of the hemisphere data
@@ -286,7 +312,7 @@ for i=find(I)
                         case 2
                             % Estimate parameters
                             [tbl,report] = gmb_CF_2table_V1(Sub_path,...% Path to subject data
-                                Ses{jdx(k)},...% Name/Code of the sesion
+                                Ses{jdx(k)},...% Name/Code of the Session
                                 report,...% Text for the final report
                                 p,...% Code indicating Lobe(1) Hemisphere(2)
                                 Hemi_MD(Conf.Mode(end)),...% Treatmetn of the hemisphere data
@@ -310,15 +336,15 @@ for i=find(I)
                         tbl.Atlas = repmat(ATL_md(p),n_row,1);
                         tbl = movevars(tbl,"Atlas",'After',1);
 
-                        % Add the Sesion [FOR NOW JUST EMPTY]
+                        % Add the Session [FOR NOW JUST EMPTY]
                         if ~strcmp(Ses{jdx(k)},'_*_')
                             aux = string(Ses{jdx(k)});
                         else
                             aux = "-";
                         end
 
-                        tbl.Sesion = repmat(aux,n_row,1);
-                        tbl = movevars(tbl,"Sesion",'Before',1);
+                        tbl.Session = repmat(aux,n_row,1);
+                        tbl = movevars(tbl,"Session",'Before',1);
 
                         % Add the Subject IDs
                         tbl.Subjects = repmat(string(IDs{j}),n_row,1);
@@ -335,6 +361,12 @@ for i=find(I)
             end
         end
 
+        % Add results to the Sreeninng report table
+        % Increase by 1 the number of complete subjects
+        if Scr_Md && CnfMd_flg==0
+            Scr_Rep.cnt (cnt) = Scr_Rep.cnt (cnt)+1;
+        end
+
         % Store subject parameteres on its folder
         % NaN to blanck
         if OW_md>0
@@ -349,6 +381,11 @@ for i=find(I)
 
         % Store the subject estimated data on the extraction table
         CFextr_tbl =[CFextr_tbl;SbSs_tbl];
+
+        % Estimate the time it took to run a single subject
+        t(end+1) = toc;
+        s(i) = s(i)-1;
+        tot_T = sum(s*mean(t)/60);
     end
 end
 
@@ -391,13 +428,18 @@ switch EX_md
         report = [report; " ";" ";"Parameters stored on file:";string(fullfile(cd,'OUTPUT',[out_nm_str,'.csv']))];
 end
 
+
+
 % Store the report
 if ~Scr_Md
     writematrix(report,rep_path)
+    msgbox("Analysis Done","Done!!","help");
 end
 
 close(H);
 
-msgbox("Analysis Done","Done!!","help");
+
+
+
 
 

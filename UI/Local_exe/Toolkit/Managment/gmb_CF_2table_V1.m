@@ -1,6 +1,6 @@
 function [tbl,report] = gmb_CF_2table_V1(DT_path,Ses,report,CF_MD,Hemi_MD,atlas)
 
-% Check if there is a sesion
+% Check if there is a Session
 ses_cnt = strcmp(Ses,'_*_');
 if ~ses_cnt
     DT_path = fullfile(DT_path,Ses);
@@ -48,7 +48,7 @@ else
             if ~ses_cnt
                 aux = [aux,Ses,'/'];
             end
-            aux = [aux,Lobe_cod{l},' corrupted during ',CF,' estimation'];
+            aux = [aux,char(Lobe_cod{l}),' corrupted during ',CF,' estimation'];
             report = [report; string(aux)];
 
             switch Hemi_MD
