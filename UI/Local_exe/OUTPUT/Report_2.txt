@@ -1,0 +1,13 @@
+Dataset gmb_Trial initiated
+   Subject 0010001 initiated
+      ESTIMATED => Lobe complete
+      ESTIMATED => Hemipshere complete
+   Subject 0010002 initiated
+      ESTIMATED => Lobe complete
+      ESTIMATED => Hemipshere complete
+   Subject 0010004 initiated
+      ESTIMATED => Lobe complete
+      ESTIMATED => Hemipshere complete
+ 
+ 
+Parameters estimated
