@@ -347,12 +347,12 @@ for i=find(I)
                         tbl = movevars(tbl,"Session",'Before',1);
 
                         % Add the Subject IDs
-                        tbl.Subjects = repmat(string(IDs{j}),n_row,1);
-                        tbl = movevars(tbl,"Subjects",'Before',1);
+                        tbl.SubjectID = repmat(string(IDs{j}),n_row,1);
+                        tbl = movevars(tbl,"SubjectID",'Before',1);
 
                         % Add the Dataset
-                        tbl.dSet = repmat(string(DtSt_nm),n_row,1);
-                        tbl = movevars(tbl,"dSet",'Before',1);
+                        tbl.dataset = repmat(string(DtSt_nm),n_row,1);
+                        tbl = movevars(tbl,"dataset",'Before',1);
 
                         % Add this data to the subject file
                         SbSs_tbl = [SbSs_tbl;tbl];
