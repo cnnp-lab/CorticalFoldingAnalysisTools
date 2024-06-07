@@ -66,7 +66,6 @@ for i=find(I)
     Subj= split(Conf.Subj{i}, Conf_Sep);
     Ses = split(Conf.Ses{i} , Conf_Sep);
 
-   
     % All subjects available on the dataset
     IDs = unique(Subj);
     for j=1:length(IDs)
@@ -86,7 +85,7 @@ for i=find(I)
         for k=1:length(jdx)
             % Add the subject data path
             if ~strcmp(Ses{jdx(k)},'_*_')
-                DT_path = fullfile(Sub_path,Ses);
+                DT_path = fullfile(Sub_path,Ses{jdx(k)});
             else
                 DT_path = Sub_path;
             end

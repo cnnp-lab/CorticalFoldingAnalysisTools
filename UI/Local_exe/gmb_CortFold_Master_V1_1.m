@@ -1,5 +1,7 @@
 function Scr_Rep = gmb_CortFold_Master_V1_1(path_0,out_nm_str)
 
+T0 = datetime("now");
+
 if nargin<1
     path_0 = cd;
 end
@@ -38,7 +40,7 @@ ATL_dx = "LUT";
 % Identifier to determine that there is no Session subfolder on the subject
 nSes_id = '_*_';
 
-%% Load the ocnfiguration data
+%% Load the configuration data
 Conf = readtable(conf_path);
 
 % Check the quality of the configuratoin file
@@ -71,11 +73,19 @@ end
 
 % Ovewrite mode for the geneerated dataset
 % Avaialble options: 0->Nothing 1->Append 2->Overwrite
-OW_md = Conf.Mode(3);
+OW_md = Conf.Mode(end-2);
 
 % Extraction mode
 % Avaialble options: 0->Not Extract 1->FS format 2->CNNP format
-EX_md = Conf.Mode(4);
+EX_md = Conf.Mode(end-1);
+
+% Determine the scales to expect based on the scaling mode
+targetScale= 0.225:0.025:.375;
+nIter=[5 5 4 4 4 4 4];
+scale_FullSet = [];
+for i=1:length(targetScale)
+    scale_FullSet = [scale_FullSet,targetScale(i).*(2.^(0:nIter(i)))];
+end
 
 % Request the name of the output to the user if not provided
 if nargin<2 && EX_md>0
@@ -196,7 +206,7 @@ for i=find(I)
 
         % Instances of this subect (Number of Sessions)
         jdx = find(strcmp(Subj,IDs{j}));
-        
+
         % Indicator if data extracted for he desired configuration
         CnfMd_flg = 0;
         for k=1:length(jdx)
@@ -204,18 +214,39 @@ for i=find(I)
             for p=1:2 % Current 2 parameter modes, Scales not implemented yet
                 if Conf.Mode(p) ~= 0
                     %% Determine the number of instances for each case
+                    switch p
+                        case 1 % For Lobes
+                            scale_N = 0; % For LOBES multiscale not implemented
+                            
+                        case 2 % For Hemispheres
+                            scl_cnt = dec2bin(Conf.Mode(3),3);
+                            scale_N = [];
+                            
+                            if scl_cnt(3)=='1'
+                                scale_N = [scale_N,0];
+                            end
+                            
+                            if scl_cnt(2)=='1'
+                                scale_N = [scale_N,scale_FullSet(1:22)];
+                            end
 
+                            if scl_cnt(1)=='1'
+                                scale_N = [scale_N,scale_FullSet(23:end)];
+                            end
+                            
+                    end
                     if ~isempty(SbOr_tbl)
                         switch p
                             case 1 % For Lobes
                                 aux = load(fullfile(path_0,'Toolkit','CortFold','Atlas',[char(ATL_md(p)),'.mat']));
                                 P_n = length(unique(aux.Map(:,2)));
+
                             case 2 % For Hemispheres
                                 P_n = 1;
                         end
 
                         % Fields of the matrix to compare
-                        vars = SbOr_tbl.Properties.VariableNames(3:6);
+                        vars = SbOr_tbl.Properties.VariableNames([3:6,8]);
 
                         % Values to compare to
                         vals = ["",ATL_md(p)];
@@ -235,38 +266,48 @@ for i=find(I)
                                 vals = [vals,ATL_md(p)];
                         end
 
-                        % Special case for hemisphere parameter
-                        % "Both" generates 2x the data (right and left)
-                        if strcmp(Hemi_MD(Conf.Mode(end)),"both")
-                            % left hemisphere
-                            vals(2) = "left";
-                            p_dx_1 = gmb_tbl_MathcMake (SbOr_tbl,vars,vals);
+                        p_dx = [];
+                        flag = [];
+                        vals = [vals,"0"];
+                        for sc = 1:length(scale_N)
+                            vals(end) = string(scale_N(sc));
+                            % Special case for hemisphere parameter
+                            % "Both" generates 2x the data (right and left)
+                            if strcmp(Hemi_MD(Conf.Mode(end)),"both")
+                                % left hemisphere
+                                vals(2) = "left";
+                                p_dx_1 = gmb_tbl_MathcMake (SbOr_tbl,vars,vals);
 
-                            % left hemisphere
-                            vals(2) = "right";
-                            p_dx_2 = gmb_tbl_MathcMake (SbOr_tbl,vars,vals);
+                                % left hemisphere
+                                vals(2) = "right";
+                                p_dx_2 = gmb_tbl_MathcMake (SbOr_tbl,vars,vals);
 
-                            % Both hemispheres
-                            p_dx = sort([p_dx_2;p_dx_1],'ascend');
-                            flag = length(p_dx) == P_n*2;
-                        else
-                            vals(2) = Hemi_MD(Conf.Mode(end));
-                            p_dx = gmb_tbl_MathcMake (SbOr_tbl,vars,vals);
-                            flag = length(p_dx) == P_n;
+                                % Both hemispheres
+                                aux = sort([p_dx_2;p_dx_1],'ascend');
+                                p_dx = [p_dx,aux];
+                                flag(sc) = length(aux) == P_n*2;
+                            else
+                                vals(2) = Hemi_MD(Conf.Mode(end));
+                                aux = gmb_tbl_MathcMake (SbOr_tbl,vars,vals);
+                                p_dx = [p_dx,aux];
+                                flag(sc) = length(p_dx) == P_n;
+                            end
                         end
                     else
                         p_dx = [];
                         flag = 0;
                     end
 
+
+
                     %% Include data was not found for the configuration
                     % Count the configurations that have not been estimated
-                    CnfMd_flg = CnfMd_flg+~flag;
+                    CnfMd_flg = CnfMd_flg+~(length(flag)==sum(flag));
 
                     %% Data extraction
                     switch OW_md
                         case 0
-                            if flag
+                            if length(flag)==sum(flag)
                                 % Extract them from existing file
                                 tbl = SbOr_tbl(p_dx,[4,7:end]);
 
@@ -288,7 +329,7 @@ for i=find(I)
                         case 1 % Check data presence and then decide if procede
 
                             % Estimate parameters if needed
-                            if flag
+                            if length(flag)==sum(flag)
                                 % Extract them from existing file
                                 tbl = SbOr_tbl(p_dx,[4,7:end]);
 
@@ -306,7 +347,8 @@ for i=find(I)
                                     report,...% Text for the final report
                                     p,...% Code indicating Lobe(1) Hemisphere(2)
                                     Hemi_MD(Conf.Mode(end)),...% Treatmetn of the hemisphere data
-                                    ATL_md(p));% For Lobe estimation, the atlas to be used
+                                    ATL_md(p),...% For Lobe estimation, the atlas to be used
+                                    Conf.Mode(3));% Scaling Mode: None, High &| resol.
                             end
 
                         case 2
@@ -316,7 +358,8 @@ for i=find(I)
                                 report,...% Text for the final report
                                 p,...% Code indicating Lobe(1) Hemisphere(2)
                                 Hemi_MD(Conf.Mode(end)),...% Treatmetn of the hemisphere data
-                                ATL_md(p));% For Lobe estimation, the atlas to be used
+                                ATL_md(p),...% For Lobe estimation, the atlas to be used
+                                Conf.Mode(3));% Scaling Mode: None, High &| resol.
                     end
 
                     % Complete the table and store it
@@ -347,12 +390,12 @@ for i=find(I)
                         tbl = movevars(tbl,"Session",'Before',1);
 
                         % Add the Subject IDs
-                        tbl.Subjects = repmat(string(IDs{j}),n_row,1);
-                        tbl = movevars(tbl,"Subjects",'Before',1);
+                        tbl.SubjectID = repmat(string(IDs{j}),n_row,1);
+                        tbl = movevars(tbl,"SubjectID",'Before',1);
 
                         % Add the Dataset
-                        tbl.dSet = repmat(string(DtSt_nm),n_row,1);
-                        tbl = movevars(tbl,"dSet",'Before',1);
+                        tbl.dataset = repmat(string(DtSt_nm),n_row,1);
+                        tbl = movevars(tbl,"dataset",'Before',1);
 
                         % Add this data to the subject file
                         SbSs_tbl = [SbSs_tbl;tbl];
@@ -428,7 +471,8 @@ switch EX_md
         report = [report; " ";" ";"Parameters stored on file:";string(fullfile(cd,'OUTPUT',[out_nm_str,'.csv']))];
 end
 
-
+T1 = datetime("now");
+report = [report; " ";" ";string(['Time that the analysis took: ',char(string(T1-T0))])];
 
 % Store the report
 if ~Scr_Md
