@@ -186,8 +186,8 @@ end
 
 %% add data to table
 
-row_template = table('Size',[1 19],'VariableTypes',[repmat({'string'},1,2),repmat({'double'},1,17)],...
-    'VariableNames',{'Hemisphere','Region',...
+row_template = table('Size',[1 20],'VariableTypes',[repmat({'string'},1,2),repmat({'double'},1,18)],...
+    'VariableNames',{'Hemisphere','Region','Scale',...
     'AvgCortThickness','PialArea','SmoothPialArea','WhiteArea','GaussianCurvature','ConvexHullArea',...
     'PialFullArea','WhiteFullArea','SmoothPialFullArea','ConvexHullFullArea',...
     'PialVol','WhiteVol','GreymatterVol',...
@@ -203,6 +203,7 @@ if param.hemi == "avg" || param.hemi == "sum"
         row = row_template;
         row.Hemisphere = param.hemi;
         row.Region = 'hemisphere';
+        row.Scale = 0;
 
         if sum(corrupt)==0
             row.AvgCortThickness   = fun(thicknessPial);
@@ -235,6 +236,7 @@ else % for "both", "right" and "left"
         row = row_template;
         row.Hemisphere = leftright(lr);
         row.Region = 'hemisphere';
+        row.Scale = 0;
 
         if corrupt(lr) == 0
             row.AvgCortThickness   = thicknessPial(lr);

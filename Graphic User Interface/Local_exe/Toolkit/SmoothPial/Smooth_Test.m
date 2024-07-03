@@ -20,9 +20,10 @@ I = zeros(size(Conf(:,1)));
 for i=1:(length(Conf_Vars)-1)
     I = I | ~cellfun(@isempty,Conf.(Conf_Vars{i}));
 end
+idx = find(I)';
 
 % Counting the number of appropriate files
-Smth_cnt =zeros(1,sum(I));
+Smth_cnt =zeros(sum(I),1);
 cnt = 0;
 
 % Paths to the subjects/sesions without the smooth surface file
@@ -50,7 +51,7 @@ s = cellfun(@length,cellfun(@unique,a, 'UniformOutput', false));
 t = [];
 tot_T = sum(s*5);
 
-for i=find(I)
+for i=idx
     cnt = cnt+1;
 
     % Naming the dataset

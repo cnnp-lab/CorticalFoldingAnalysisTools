@@ -94,7 +94,8 @@ if nargin<2 && EX_md>0
     fieldsize = [1 45];
     definput = {'CFpar'};
     answer = inputdlg(prompt,dlgtitle,fieldsize,definput);
-    out_nm_str = answer{1};
+    out_nm_str{1} = answer{1};
+    out_nm_str{2} = fullfile(path_0,'OUTPUT');
 end
 
 %% Run the paramters estimator thrugh all the included datasets and files
@@ -104,11 +105,12 @@ I = zeros(size(Conf(:,1)));
 for i=1:(length(Conf_Vars)-1)
     I = I | ~cellfun(@isempty,Conf.(Conf_Vars{i}));
 end
+idx = find(I)';
 
 % When both OW_md & EX_md are 0 => Sreening and report mode activated
 Scr_Md = ~OW_md & ~EX_md;
-Scr_Rep = table(repmat("",1,length(find(I))),zeros(1,length(find(I))),...
-    zeros(1,length(find(I))),'VariableNames',{'dSet','N','cnt'});
+Scr_Rep = table(repmat("",length(idx),1),zeros(length(idx),1),...
+    zeros(length(idx),1),'VariableNames',{'dSet','N','cnt'});
 cnt = 0;
 
 % Table storing all the cortical folding parameters desired
@@ -127,7 +129,7 @@ t = [];
 tot_T = sum(s*5);
 
 % Go though all datasets included
-for i=find(I)
+for i=idx
     % Naming the dataset
     [~,DtSt_nm,~] = fileparts(Conf.Root{i});
 
@@ -239,7 +241,7 @@ for i=find(I)
                         switch p
                             case 1 % For Lobes
                                 aux = load(fullfile(path_0,'Toolkit','CortFold','Atlas',[char(ATL_md(p)),'.mat']));
-                                P_n = length(unique(aux.Map(:,2)));
+                                P_n = length(unique(aux.Map.Lobe_cd));
 
                             case 2 % For Hemispheres
                                 P_n = 1;
@@ -441,34 +443,36 @@ switch EX_md
         end
 
     case 1 % Store data with FreeSurfer file format
-        out_nm_str = [out_nm_str,'_FS'];
+        rmdir(fullfile(out_nm_str{2},out_nm_str{1}),'s')
 
+        out_nm_str{1} = [out_nm_str{1},'_FS'];
+        
         % Check if there are other output files to not overwrite
-        out_nm_str = gmb_NM_Check_V0 (out_nm_str,'.csv',fullfile(path_0,'OUTPUT'));
+        out_nm_str{1} = gmb_NM_Check_V0 (out_nm_str{1},'.csv',out_nm_str{2});
 
         % Convert the current format
-        gmb_CNNP2FS_V0 (CFextr_tbl,out_nm_str,fullfile(path_0,'OUTPUT'));
+        gmb_CNNP2FS_V0 (CFextr_tbl,out_nm_str{1},out_nm_str{2});
 
         % Store the report
-        report = [report; " ";" ";"Parameters stored on folder:";string(fullfile(cd,'OUTPUT',out_nm_str))];
+        report = [report; " ";" ";"Parameters stored on folder:";string(fullfile(out_nm_str{2},out_nm_str{1}))];
 
     case 2 % Store data with CNNP propietary file format
-        out_nm_str = [out_nm_str,'_CNNP'];
+        out_nm_str{1} = [out_nm_str{1},'_CNNP'];
 
         % Check if there are other output files to not overwrite
-        out_nm_str = gmb_NM_Check_V0 (out_nm_str,'.csv',fullfile(path_0,'OUTPUT'));
+        out_nm_str{1} = gmb_NM_Check_V0 (out_nm_str{1},'.csv',out_nm_str{2});
 
         % Store the parameters
         % NaN to blanck
         if size(CFextr_tbl,1)>1
             T = convertvars(CFextr_tbl, @isnumeric, @gmb_tbl_nanblank_V0);
-            writetable(T,fullfile(path_0,'OUTPUT',[out_nm_str,'.csv']))
+            writetable(T,fullfile(out_nm_str{2},[out_nm_str{1},'.csv']))
         else
             T = convertvars(CFextr_tbl([1,1],:), @isnumeric, @gmb_tbl_nanblank_V0);
-            writetable(T(1,:),fullfile(path_0,'OUTPUT',[out_nm_str,'.csv']))
+            writetable(T(1,:),fullfile(out_nm_str{2},[out_nm_str{1},'.csv']))
         end
 
-        report = [report; " ";" ";"Parameters stored on file:";string(fullfile(cd,'OUTPUT',[out_nm_str,'.csv']))];
+        report = [report; " ";" ";"Parameters stored on file:";string(fullfile(out_nm_str{2},[out_nm_str{1},'.csv']))];
 end
 
 T1 = datetime("now");

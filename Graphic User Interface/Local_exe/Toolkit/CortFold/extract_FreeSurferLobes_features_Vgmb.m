@@ -95,7 +95,7 @@ param.atlas  = string(param.atlas);
 % load look-up-table for FS lobe labels vs the labels we use here (0-5):
 switch param.atlas
     case "LUT"
-        aux = load('LUT_2.mat');
+        aux = load('LUT.mat');
         Atlas = aux.Map;
 
         % Lobes to considere
@@ -251,6 +251,7 @@ if param.hemi == "avg" || param.hemi == "sum"
         row = table();
         row.Hemisphere = param.hemi;
         row.Region = LB_nm(lobe);
+        row.Scale = 0;
 
         row.AvgCortThickness  = fun(AvgThickness(lobe,:));
         row.PialArea          = fun(TotalArea(lobe,:));
@@ -282,6 +283,7 @@ else % for "both", "right" and "left"
             row = table();
             row.Hemisphere = leftright(lr);
             row.Region = LB_nm(lobe);
+            row.Scale = 0;
 
             row.AvgCortThickness  = AvgThickness(lobe,lr);
             row.PialArea          = TotalArea(lobe,lr);
