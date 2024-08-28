@@ -84,7 +84,7 @@ function [tbl, corrupt] ...
 p = inputParser;
 p.addParameter('hemi',   'both',  @(x) isstring(x) | ischar(x));
 p.addParameter('verbose', true,   @(x) islogical(x));
-p.addParameter('atlas',   'LUT',  @(x) isstring(x) | ischar(x));
+p.addParameter('atlas',   'FSDK',  @(x) isstring(x) | ischar(x));
 p.parse(varargin{:});
 param = p.Results;
 
@@ -94,8 +94,8 @@ param.atlas  = string(param.atlas);
 
 % load look-up-table for FS lobe labels vs the labels we use here (0-5):
 switch param.atlas
-    case "LUT"
-        aux = load('LUT.mat');
+    case "FSDK"
+        aux = load('FSDK.mat');
         Atlas = aux.Map;
 
         % Lobes to considere

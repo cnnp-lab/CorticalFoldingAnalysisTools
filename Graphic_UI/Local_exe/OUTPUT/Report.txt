@@ -1,0 +1,30 @@
+Dataset OASIS3_Fragment initiated
+   Subject sub-OAS30001 initiated
+      WARNING => left corrupted during Lobe estimation
+      WARNING => right corrupted during Lobe estimation
+   Subject sub-OAS30001_ses-d0129 initiated
+      ESTIMATED => Lobe complete
+   Subject sub-OAS30001_ses-d0129.long.sub-OAS30001 initiated
+      WARNING => left corrupted during Lobe estimation
+      WARNING => right corrupted during Lobe estimation
+   Subject sub-OAS30001_ses-d0757 initiated
+      ESTIMATED => Lobe complete
+   Subject sub-OAS30001_ses-d0757.long.sub-OAS30001 initiated
+      WARNING => left corrupted during Lobe estimation
+      WARNING => right corrupted during Lobe estimation
+   Subject sub-OAS30001_ses-d2430 initiated
+      ESTIMATED => Lobe complete
+   Subject sub-OAS30001_ses-d2430.long.sub-OAS30001 initiated
+      WARNING => left corrupted during Lobe estimation
+      WARNING => right corrupted during Lobe estimation
+   Subject sub-OAS30001_ses-d3132 initiated
+      ESTIMATED => Lobe complete
+   Subject sub-OAS30001_ses-d3132.long.sub-OAS30001 initiated
+      WARNING => left corrupted during Lobe estimation
+      WARNING => right corrupted during Lobe estimation
+ 
+ 
+Parameters estimated
+ 
+ 
+Time that the analysis took: 00:02:13

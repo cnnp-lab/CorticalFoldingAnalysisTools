@@ -1,0 +1,15 @@
+Dataset OASIS3_Fragment initiated
+   Subject sub-OAS30001_ses-d0129 initiated
+      EXTRACTED => both data obtained
+   Subject sub-OAS30001_ses-d0757 initiated
+      EXTRACTED => both data obtained
+   Subject sub-OAS30001_ses-d2430 initiated
+      EXTRACTED => both data obtained
+   Subject sub-OAS30001_ses-d3132 initiated
+      EXTRACTED => both data obtained
+ 
+ 
+Parameters estimated
+ 
+ 
+Time that the analysis took: 00:02:42
