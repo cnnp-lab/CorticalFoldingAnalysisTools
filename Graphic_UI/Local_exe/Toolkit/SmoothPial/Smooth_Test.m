@@ -106,9 +106,7 @@ for i=idx
                     
                     % Add the path of the subject to the set
                     p_nt = p_nt+1;
-                    path{p_nt} = DT_path;
-                    
-                    continue;
+                    path{p_nt} = fullfile(DT_path,'surf',char(Hemi_MD(l)));
                 end
             end
         end
@@ -124,5 +122,7 @@ for i=idx
         tot_T = sum(s*mean(t)/60);
     end
 end
+
+path = unique(path);
 
 close(H);

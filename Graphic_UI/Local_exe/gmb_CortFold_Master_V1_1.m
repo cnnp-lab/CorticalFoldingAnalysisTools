@@ -35,7 +35,7 @@ Conf_Sep = ' | ';
 Hemi_MD = ["left","right","both","avg","sum"];
 
 % Avaialable Atlas currently
-ATL_dx = "LUT";
+ATL_dx = "FSDK";
 
 % Identifier to determine that there is no Session subfolder on the subject
 nSes_id = '_*_';
