@@ -12,7 +12,7 @@ Our collaborators also have a Python version of this toolbox, **contact us (cnnp
 
 ### Before you start
 
-You need to consider if you wish to use the GUI or prefer to use and adapt the core scripts. The former is recommended as a first step, as it brings together all the key functionalities in one place. A **manual** can be found in the "Graphic User Interface" folder, and is the easiest place to start.
+You need to consider if you wish to use the GUI or prefer to use and adapt the core scripts. The former is recommended as a first step, as it brings together all the key functionalities in one place. A **manual** can be found in the "Graphic UI" folder, and is the easiest place to start.
 We generally recommend a Linux/Unix or MacOS environment, which is what we have tested most extensively.
 
 #### Required external library 
