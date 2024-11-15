@@ -10,7 +10,7 @@ end
 switch CF_MD
     case 1 % Lobewise analysis
         [tbl, corrupt] = extract_FreeSurferLobes_features_Vgmb(DT_path,...
-            'hemi', Hemi_MD,'verbose',false,'atlas','LUT');
+            'hemi', Hemi_MD,'verbose',false,'atlas','FSDK');
         CF = 'Lobe';
 
     case 2 % Hemispherewise analysis

@@ -84,7 +84,7 @@ function [tbl, corrupt] ...
 p = inputParser;
 p.addParameter('hemi',   'both',  @(x) isstring(x) | ischar(x));
 p.addParameter('verbose', true,   @(x) islogical(x));
-p.addParameter('atlas',   'LUT',  @(x) isstring(x) | ischar(x));
+p.addParameter('atlas',   'FSDK',  @(x) isstring(x) | ischar(x));
 p.parse(varargin{:});
 param = p.Results;
 
@@ -94,8 +94,8 @@ param.atlas  = string(param.atlas);
 
 % load look-up-table for FS lobe labels vs the labels we use here (0-5):
 switch param.atlas
-    case "LUT"
-        aux = load('LUT.mat');
+    case "FSDK"
+        aux = load('FSDK.mat');
         Atlas = aux.Map;
 
         % Lobes to considere
@@ -126,6 +126,9 @@ switch(param.hemi)
 end
 
 corrupt = zeros(1,length(lrstr)); % Inidicated if the ID is corrupted or not
+
+% Pathc the memory leaking to the RAM
+clear functions;
 
 %% Load subject data
 tic % start timer
@@ -159,9 +162,13 @@ for lr = 1:length(lrstr)
         end
     catch me
         corrupt(lr) = 1; % store the corrupt Hemisphere files
+        % Pathc the memory leaking to the RAM
+        clear functions;
         continue
     end
-
+    % Pathc the memory leaking to the RAM
+    clear functions;
+    
     %% match labels to smooth surface
     label_smooth = matchSurfLabel(label,pialv,opialv);
 
