@@ -1,12 +1,12 @@
 # CorticalFoldingAnalysisTools
-Matlab scripts to extract features of cortical folding from Freesurfer folders. Current version 1.0
+Matlab toolbox to extract features of cortical folding from Freesurfer folders. Current version 2.0
 
-## What can this do?
+## What can this toolbox do?
+The MATLAB toolbox is designed to extract various features of cortical folding derived/based on the universal scaling law of cortical morphology (see "Related publications").
+The toolbox assumes Freesurfer folder structures as input, and can provide outputs (features of cortical folding) in a variety of ways. See section below on "Further statistical analysis", if you want a starting point. 
 
-Given a list of Freesurfer subjects, the provided code will automatically extract among other measures: the average cortical thickness (slightly different to FS's own algorithm), the total pial surface area (different to FS's code), and the exposed surface area. With these three quantities, [an analysis to test for the universal scaling of cortical folding](https://doi.org/10.1073/pnas.1610175113) can be performed. The main difference to FS's own code is that this pipeline accounts for the parts on the surface mesh that are not cortex.
-
-
-
+In this version, we have now also added a Graphical User Interface (GUI) if you are not familiar with MATLAB.
+Our collaborators also have a Python version of this toolbox, **contact us (cnnplab@ncl.ac.uk)** if you want early access, or have general questions.
 
 ## How to use?
 
@@ -29,6 +29,8 @@ This is the code used for the [2019 Commun Biol publication](https://www.nature.
 ### Dependencies
 For the lobe-based analysis, you will need the [iso2mesh](http://iso2mesh.sourceforge.net) matlab library on your path.
 
+
+## Further statistical analysis
 
 ## How to cite?
 
