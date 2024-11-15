@@ -11,6 +11,9 @@ addpath(genpath(fullfile(path_0,'Toolkit')))
 
 % Path to the report file for erros and other issues
 rep_nm = gmb_NM_Check_V0 ('Report','.txt',fullfile(path_0,'OUTPUT'));
+if ~isfolder(fullfile(path_0,'OUTPUT'))
+    mkdir(fullfile(path_0,'OUTPUT'));
+end
 rep_path = fullfile(path_0,'OUTPUT',[rep_nm,'.txt']);
 report = [];
 
@@ -98,6 +101,23 @@ if nargin<2 && EX_md>0
     out_nm_str{2} = fullfile(path_0,'OUTPUT');
 end
 
+% Definr the output file name
+switch EX_md
+    case 1
+        rmdir(fullfile(out_nm_str{2},out_nm_str{1}),'s')
+        out_nm_str{1} = [out_nm_str{1},'_FS'];
+
+        % Check if there are other output files to not overwrite
+        out_nm_str{1} = gmb_NM_Check_V0 (out_nm_str{1},'.csv',out_nm_str{2});
+    case 2
+        out_nm_str{1} = [out_nm_str{1},'_CNNP'];
+
+        % Check if there are other output files to not overwrite
+        out_nm_str{1} = gmb_NM_Check_V0 (out_nm_str{1},'.csv',out_nm_str{2});
+        
+        out_path = fullfile(out_nm_str{2},[out_nm_str{1},'.csv']);
+end
+
 %% Run the paramters estimator thrugh all the included datasets and files
 
 % Detect the field with proper info
@@ -113,9 +133,6 @@ Scr_Rep = table(repmat("",length(idx),1),zeros(length(idx),1),...
     zeros(length(idx),1),'VariableNames',{'dSet','N','cnt'});
 cnt = 0;
 
-% Table storing all the cortical folding parameters desired
-CFextr_tbl = [];
-
 % Show Progress
 H = waitbar(0,'','Name','PROGRESS');
 H.Children.Title.Interpreter = 'none';
@@ -123,10 +140,14 @@ H.Children.Title.Interpreter = 'none';
 % Estimate the total amount of time required
 aux = Conf.Subj(I);% Subject Set
 a = cellfun(@split, aux, repmat({Conf_Sep},size(aux)), 'UniformOutput', false);
+
 % Number of subjects
 s = cellfun(@length,cellfun(@unique,a, 'UniformOutput', false));
 t = [];
 tot_T = sum(s*5);
+
+% Flag indicating that No data has been stored yet
+store_flag = 0;
 
 % Go though all datasets included
 for i=idx
@@ -425,7 +446,40 @@ for i=idx
         end
 
         % Store the subject estimated data on the extraction table
-        CFextr_tbl =[CFextr_tbl;SbSs_tbl];
+        if ~isempty(SbSs_tbl)
+            switch EX_md
+                case 1 % Store data with FreeSurfer file format
+                    % Convert the current format
+                    gmb_CNNP2FS_V1 (SbSs_tbl,out_nm_str{1},out_nm_str{2});
+
+                case 2 % Store data with CNNP propietary file format
+
+                    if ~store_flag % First individual, generate the report file
+                        % Store the parameters
+                        % NaN to blanck
+                        if size(SbSs_tbl,1)>1
+                            T = convertvars(SbSs_tbl, @isnumeric, @gmb_tbl_nanblank_V0);
+                            writetable(T,out_path)
+                        else
+                            T = convertvars(SbSs_tbl([1,1],:), @isnumeric, @gmb_tbl_nanblank_V0);
+                            writetable(T(1,:),out_path)
+                        end
+
+                        % Set the flag to append
+                        store_flag = 1;
+                    else
+                        % Store the parameters
+                        % NaN to blanck
+                        if size(SbSs_tbl,1)>1
+                            T = convertvars(SbSs_tbl, @isnumeric, @gmb_tbl_nanblank_V0);
+                            writetable(T,out_path,'WriteMode','Append','WriteVariableNames',false,'WriteRowNames',true);
+                        else
+                            T = convertvars(SbSs_tbl([1,1],:), @isnumeric, @gmb_tbl_nanblank_V0);
+                            writetable(T(1,:),out_path,'WriteMode','Append','WriteVariableNames',false,'WriteRowNames',true);
+                        end
+                    end
+            end
+        end
 
         % Estimate the time it took to run a single subject
         t(end+1) = toc;
@@ -435,7 +489,6 @@ for i=idx
 end
 
 %% Write the final report and save the generated values
-
 switch EX_md
     case 0
         if OW_md~=0
@@ -443,35 +496,9 @@ switch EX_md
         end
 
     case 1 % Store data with FreeSurfer file format
-        rmdir(fullfile(out_nm_str{2},out_nm_str{1}),'s')
-
-        out_nm_str{1} = [out_nm_str{1},'_FS'];
-        
-        % Check if there are other output files to not overwrite
-        out_nm_str{1} = gmb_NM_Check_V0 (out_nm_str{1},'.csv',out_nm_str{2});
-
-        % Convert the current format
-        gmb_CNNP2FS_V0 (CFextr_tbl,out_nm_str{1},out_nm_str{2});
-
-        % Store the report
         report = [report; " ";" ";"Parameters stored on folder:";string(fullfile(out_nm_str{2},out_nm_str{1}))];
 
     case 2 % Store data with CNNP propietary file format
-        out_nm_str{1} = [out_nm_str{1},'_CNNP'];
-
-        % Check if there are other output files to not overwrite
-        out_nm_str{1} = gmb_NM_Check_V0 (out_nm_str{1},'.csv',out_nm_str{2});
-
-        % Store the parameters
-        % NaN to blanck
-        if size(CFextr_tbl,1)>1
-            T = convertvars(CFextr_tbl, @isnumeric, @gmb_tbl_nanblank_V0);
-            writetable(T,fullfile(out_nm_str{2},[out_nm_str{1},'.csv']))
-        else
-            T = convertvars(CFextr_tbl([1,1],:), @isnumeric, @gmb_tbl_nanblank_V0);
-            writetable(T(1,:),fullfile(out_nm_str{2},[out_nm_str{1},'.csv']))
-        end
-
         report = [report; " ";" ";"Parameters stored on file:";string(fullfile(out_nm_str{2},[out_nm_str{1},'.csv']))];
 end
 

@@ -127,6 +127,9 @@ end
 
 corrupt = zeros(1,length(lrstr)); % Inidicated if the ID is corrupted or not
 
+% Pathc the memory leaking to the RAM
+clear functions;
+
 %% Load subject data
 tic % start timer
 
@@ -159,9 +162,13 @@ for lr = 1:length(lrstr)
         end
     catch me
         corrupt(lr) = 1; % store the corrupt Hemisphere files
+        % Pathc the memory leaking to the RAM
+        clear functions;
         continue
     end
-
+    % Pathc the memory leaking to the RAM
+    clear functions;
+    
     %% match labels to smooth surface
     label_smooth = matchSurfLabel(label,pialv,opialv);
 

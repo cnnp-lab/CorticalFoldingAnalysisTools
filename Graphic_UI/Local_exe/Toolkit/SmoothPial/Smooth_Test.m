@@ -51,6 +51,9 @@ s = cellfun(@length,cellfun(@unique,a, 'UniformOutput', false));
 t = [];
 tot_T = sum(s*5);
 
+% Pathc the memory leaking to the RAM
+clear functions;
+
 for i=idx
     cnt = cnt+1;
 
@@ -95,19 +98,22 @@ for i=idx
             for l=1:length(Hemi_MD)
                 % Path to the pial-smooth file
                 Smt_path = fullfile(DT_path,'surf',[char(Hemi_MD(l)),'.pial-outer-smoothed']);
-                
+
                 % Evaluate if the 'smooth' file is present adn it works
                 try
                     evalc("[opialv,opialf] = freesurfer_read_surf(Smt_path)");
                 catch me
+                %if ~isfile(Smt_path)
                     % Trigger flag that at least 1 of the smooth surfaces
                     % not ok/missing
                     flag = flag+1;
-                    
+
                     % Add the path of the subject to the set
                     p_nt = p_nt+1;
                     path{p_nt} = fullfile(DT_path,'surf',char(Hemi_MD(l)));
                 end
+                % Pathc the memory leaking to the RAM
+                clear functions;
             end
         end
         
@@ -120,9 +126,11 @@ for i=idx
         t(end+1) = toc;
         s(i) = s(i)-1;
         tot_T = sum(s*mean(t)/60);
+
     end
 end
-
 path = unique(path);
 
 close(H);
+
+%clear functions
