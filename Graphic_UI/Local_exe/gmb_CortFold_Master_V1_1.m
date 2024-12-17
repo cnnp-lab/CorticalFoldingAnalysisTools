@@ -44,7 +44,7 @@ ATL_dx = "FSDK";
 nSes_id = '_*_';
 
 %% Load the configuration data
-Conf = readtable(conf_path);
+Conf = readtable(conf_path,"Delimiter","comma");
 
 % Check the quality of the configuratoin file
 flag = 0;
@@ -435,12 +435,31 @@ for i=idx
 
         % Store subject parameteres on its folder
         % NaN to blanck
+        switch  OW_md
+            case 1
+                TAB = SbOr_tbl;
+                vars = SbSs_tbl.Properties.VariableNames(1:8);
+                for k =1:size(SbSs_tbl,1)
+                    vals = SbSs_tbl(k,1:8);
+                    aux = gmb_tbl_MathcMake (TAB,vars,vals.Variables);
+                    if any(aux)
+                        TAB(aux(1),:) = SbSs_tbl(k,:);
+                    else
+                        TAB = [TAB;SbSs_tbl(k,:)];
+                    end
+
+                end
+                
+            case 2
+                TAB = SbSs_tbl;
+        end
+
         if OW_md>0
-            if size(SbSs_tbl,1)>1
-                T = convertvars(SbSs_tbl, @isnumeric, @gmb_tbl_nanblank_V0);
+            if size(TAB,1)>1
+                T = convertvars(TAB, @isnumeric, @gmb_tbl_nanblank_V0);
                 writetable(T,fullfile(Sub_path,[IDs{j},'_CFpar.csv']))
-            elseif size(SbSs_tbl,1)==1
-                T = convertvars(SbSs_tbl([1,1],:), @isnumeric, @gmb_tbl_nanblank_V0);
+            elseif size(TAB,1)==1
+                T = convertvars(TAB([1,1],:), @isnumeric, @gmb_tbl_nanblank_V0);
                 writetable(T(1,:),fullfile(Sub_path,[IDs{j},'_CFpar.csv']))
             end
         end
