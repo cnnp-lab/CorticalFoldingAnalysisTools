@@ -7,7 +7,7 @@ addpath(genpath(fullfile(path_0,'ToolKit')))
 conf_path = fullfile(path_0,'Config_Fold.csv');
 
 % Load the configuration
-Conf = readtable(conf_path);
+Conf = readtable(conf_path,"Delimiter","comma");
 
 % Structure of the expected configuration files
 Conf_Vars = {'Root','FS','Subj','Ses','Mode'};
