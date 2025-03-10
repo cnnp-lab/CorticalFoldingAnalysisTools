@@ -28,6 +28,10 @@ if ~isfile (conf_path)
     return;
 end
 
+% Structure of the expected feature csv files: First 8 indicated extracted
+% features origin and configuration
+Out_VarNm = {'dataset', 'SubjectID', 'Session', 'Hemisphere', 'Atlas', 'Finess', 'Region', 'Scale'};
+
 % Structure of the expected configuration files
 Conf_Vars = {'Root','FS','Subj','Ses','Mode'};
 
@@ -61,15 +65,16 @@ else
     end
 end
 
+% Not valid configuration file
 if flag
-    % Not valid configuration file
     report = [report;"AVORTED => Configuration file not valid"];
     writematrix(report,rep_path)
     return;
 end
 
 % Determine which of the atlases are used for Lobe estimation
-ATL_md = ["","hemisphere"]; % Hemisphere estimations specific naming
+% "hemisphere" -> Specific naming Hemisphere estimations specific naming
+ATL_md = ["","hemisphere"];
 if Conf.Mode(1)>0
     ATL_md(1) = ATL_dx(Conf.Mode(1));
 end
@@ -118,7 +123,7 @@ switch EX_md
         out_path = fullfile(out_nm_str{2},[out_nm_str{1},'.csv']);
 end
 
-%% Run the paramters estimator thrugh all the included datasets and files
+%% Run the paramters estimator through all the included datasets and files
 
 % Detect the field with proper info
 I = zeros(size(Conf(:,1)));
@@ -206,26 +211,35 @@ for i=idx
         % Directory with the files per subject
         Sub_path = fullfile(FS_path,IDs{j});
 
-        % Location of for the Repository csv
+        % Location of previouslly extracted features of the subject
         SubParam_file = fullfile(Sub_path,[IDs{j},'_CFpar.csv']);
 
         % Read the existing data if needed & avaialable
         SbOr_tbl = [];
-        if ~isfile(SubParam_file)
-            if OW_md == 1
-                OW_md = 2;
-            end
-        elseif OW_md ~= 2
+        % if ~isfile(SubParam_file) % No previous data for the subject
+        %     if OW_md == 1
+        %         OW_md = 2;
+        %     end
+        % else
+        if isfile(SubParam_file) && OW_md ~= 2
             % Load previouslly existing data
             opts = detectImportOptions(SubParam_file);
             opts.VariableTypes = repmat({'double'},1,length(opts.VariableTypes));
             opts.VariableTypes(1:7) = repmat({'string'},1,7);
             SbOr_tbl = readtable(SubParam_file,opts);
+            struct_check = strcmp(Out_VarNm,SbOr_tbl.Properties.VariableNames(1:8));
+            if any(~struct_check)
+                SbOr_tbl = [];
+            end
+        end
+        
+        %Replace outdated ATLAS Naming
+        if ~isempty(SbOr_tbl)
+            SbOr_tbl.Atlas(SbOr_tbl.Atlas == "LUT") = "FSDK";
         end
 
         % Indicate that the analysis of the dataset has started
         report = [report; string(['   Subject ',IDs{j},' initiated'])];
-
 
         % Instances of this subect (Number of Sessions)
         jdx = find(strcmp(Subj,IDs{j}));
@@ -437,17 +451,21 @@ for i=idx
         % NaN to blanck
         switch  OW_md
             case 1
-                TAB = SbOr_tbl;
-                vars = SbSs_tbl.Properties.VariableNames(1:8);
-                for k =1:size(SbSs_tbl,1)
-                    vals = SbSs_tbl(k,1:8);
-                    aux = gmb_tbl_MathcMake (TAB,vars,vals.Variables);
-                    if any(aux)
-                        TAB(aux(1),:) = SbSs_tbl(k,:);
-                    else
-                        TAB = [TAB;SbSs_tbl(k,:)];
+                if isempty(SbOr_tbl)
+                    TAB = SbSs_tbl;
+                else
+                    TAB = SbOr_tbl;
+                    vars = SbSs_tbl.Properties.VariableNames(1:8);
+                    for k =1:size(SbSs_tbl,1)
+                        vals = SbSs_tbl(k,1:8);
+                        aux = gmb_tbl_MathcMake (TAB,vars,vals.Variables);
+                        if any(aux)
+                            TAB(aux(1),:) = SbSs_tbl(k,:);
+                        else
+                            TAB = [TAB;SbSs_tbl(k,:)];
+                        end
+    
                     end
-
                 end
                 
             case 2
